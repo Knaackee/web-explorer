@@ -9,7 +9,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Ndggr.Tests.Unit" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Ndggr\Ndggr.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AngleSharp" Version="1.4.0" />
+    <PackageReference Include="ReverseMarkdown" Version="5.2.0" />
+    <PackageReference Include="SmartReader" Version="0.11.0" />
   </ItemGroup>
 
 </Project>

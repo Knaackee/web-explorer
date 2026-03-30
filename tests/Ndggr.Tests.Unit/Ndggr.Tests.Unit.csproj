@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Ndggr\Ndggr.csproj" />
+    <ProjectReference Include="..\..\src\Ndggr.Content\Ndggr.Content.csproj" />
   </ItemGroup>
 
   <ItemGroup>
