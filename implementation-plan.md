@@ -61,18 +61,19 @@ Feature-Parity fuer Suchbereich inkl. Proxy, Privacy und Spezialsuchen.
 ### Status
 Abgeschlossen. 0 Warnings, 0 Errors. 54/54 Tests gruen.
 
-## Phase 3 - Content Fetch MVP (Ndggr.Content)
+## Phase 3 - Content Fetch MVP (Ndggr.Content) ✅
 
 ### Ziel
 URL in strukturierten Inhalt umwandeln: Markdown und JSON.
 
-### Tasks
-1. `FetchAsync(url, FetchOptions)` implementieren.
-2. Robustes HTTP-Fetching: Timeout, Retry, Redirect, Compression.
-3. Main-Content Extraction mit Readability (Primary).
-4. HTML -> Markdown mit ReverseMarkdown (nur diese Engine in Phase 1).
-5. JSON-Ausgabe (`ContentDocument`) mit `schemaVersion=1`.
-6. CLI `ndggr fetch <url>` mit `--format markdown|json|jsonl`.
+### Erledigte Tasks
+1. ✅ `FetchAsync(url, FetchOptions)` implementieren.
+2. ✅ Robustes HTTP-Fetching: Timeout, Retry, Redirect, Compression.
+3. ✅ Main-Content Extraction mit Readability (Primary).
+4. ✅ HTML -> Markdown mit ReverseMarkdown (nur diese Engine in Phase 1).
+5. ✅ JSON-Ausgabe (`ContentDocument`) mit `schemaVersion=1`.
+6. ✅ CLI `ndggr fetch <url>` mit `--format markdown|json|jsonl`.
+7. ✅ 49 neue Tests (103 gesamt), alle gruen auf net8.0 und net10.0.
 
 ### Deliverables
 1. End-to-End Fetch Pipeline mit Markdown und JSON Output.
@@ -83,20 +84,17 @@ URL in strukturierten Inhalt umwandeln: Markdown und JSON.
 2. Golden-File Pass Rate >= 95% fuer v1-Fixture-Set.
 3. Bei Fehlern strukturierte Error-Response mit Diagnosefeldern.
 
-## Phase 4 - Library DX und API-Ergonomie
+## Phase 4 - Library DX und API-Ergonomie ✅
 
 ### Ziel
 API soll fuer Nutzer so einfach sein wie CLI.
 
-### Tasks
-1. Simple Facade API:
-   1. `SearchAsync("...")`
-   2. `FetchMarkdownAsync("...")`
-   3. `FetchJsonAsync("...")`
-2. Advanced API mit `SearchOptions` und `FetchOptions`.
-3. DI Integration (`services.AddNdggr(...)`).
-4. Konsistente Defaults fuer Timeout, Retry, User-Agent.
-5. API-Dokumentation und Minimalbeispiele.
+### Erledigte Tasks
+1. ✅ Simple Facade API: `SearchAsync("...")`, `FetchMarkdownAsync("...")`, `FetchAsync("...")`.
+2. ✅ Advanced API mit `DdgSearchOptions` und `ContentExtractionOptions`.
+3. ✅ DI Integration (`services.AddNdggr(...)`).
+4. ✅ Konsistente Defaults fuer Timeout, Retry, User-Agent.
+5. ✅ 9 neue Tests (112 gesamt), alle gruen auf net8.0 und net10.0.
 
 ### Deliverables
 1. One-liner Nutzung fuer Standardfaelle.
@@ -106,17 +104,20 @@ API soll fuer Nutzer so einfach sein wie CLI.
 1. Sample-App zeigt One-liner und Proxy-Use-Cases.
 2. API Surface stabil und eindeutig benannt.
 
-## Phase 5 - Robustheit und Qualitaetsnetz
+## Phase 5 - Robustheit und Qualitaetsnetz ✅
 
 ### Ziel
 Technische Robustheit fuer Produktion und LLM-Tooling absichern.
 
-### Tasks
-1. Golden-File Suite ausbauen (News, Docs, Blogs, Wikipedia, GitHub).
-2. Failure-Injection Tests: 429, 5xx, kaputtes HTML, Redirect-Loops.
-3. Chunking deterministisch machen und testen.
-4. JSON-Schema-Kompatibilitaet testen (additive-only in v1).
-5. Security Check fuer Parser/Sanitizer-Dependencies.
+### Erledigte Tasks
+1. ✅ Golden-File Suite (News, Docs/API, Blog, Wikipedia, GitHub README) mit 5 HTML-Fixtures.
+2. ✅ 40+ Golden-File Tests: Titel, Sektionen, Code-Erhaltung, Sidebar/Nav-Filterung, Cross-Archetype-Vertraege.
+3. ✅ Failure-Injection Tests: 429 retry, 500 recovery, 503 all-retries, 403 no-retry, HttpRequestException retry, Cancellation.
+4. ✅ Broken/Malformed HTML: unclosed tags, empty body, whitespace-only, script-heavy, deep nesting, huge content, plain text, special chars.
+5. ✅ Chunking-Determinismus: 10 Tests (stabile IDs, identische Ausgabe, URL-abhaengige IDs, Hex-Format, ContiguousIndices).
+6. ✅ JSON-Schema-Kompatibilitaet v1: required fields, null-omission, round-trip, forward-compat, camelCase, type-checks.
+7. ✅ Edge-Case/Security: XSS/Script-Filterung, Event-Handler-Filterung, javascript:-URL-Filterung, Style-Stripping, RTL, Zero-Width-Chars, Relative-URL-Resolution.
+8. ✅ 92 neue Tests (204 gesamt), alle gruen auf net8.0 und net10.0.
 
 ### Deliverables
 1. Stabile Regression-Suite.

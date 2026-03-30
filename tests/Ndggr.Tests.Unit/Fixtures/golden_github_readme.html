@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>dotnet/runtime: .NET is a cross-platform runtime for cloud, mobile, desktop, and IoT apps.</title>
+    <meta property="og:site_name" content="GitHub">
+</head>
+<body>
+    <div class="application-main">
+        <header>
+            <nav>
+                <a href="/">GitHub</a>
+                <a href="/dotnet">dotnet</a>
+                <a href="/dotnet/runtime">runtime</a>
+            </nav>
+            <div class="repo-nav">
+                <a href="/dotnet/runtime">Code</a>
+                <a href="/dotnet/runtime/issues">Issues</a>
+                <a href="/dotnet/runtime/pulls">Pull requests</a>
+                <a href="/dotnet/runtime/actions">Actions</a>
+                <a href="/dotnet/runtime/wiki">Wiki</a>
+            </div>
+        </header>
+        <main>
+            <article class="markdown-body">
+                <h1>.NET Runtime</h1>
+                <p><a href="https://github.com/dotnet/runtime/actions"><img src="https://github.com/dotnet/runtime/workflows/CI/badge.svg" alt="Build Status"></a>
+                <a href="https://www.nuget.org/packages/Microsoft.NETCore.App.Ref/"><img src="https://img.shields.io/nuget/v/Microsoft.NETCore.App.Ref" alt="NuGet"></a></p>
+
+                <p>This repo contains the code to build the .NET runtime, libraries, and shared host (<code>dotnet</code>) installers for all supported platforms. It includes the following components:</p>
+
+                <h2>What is .NET?</h2>
+                <p>.NET is a free, cross-platform, open source developer platform for building many different types of applications. With .NET, you can use multiple languages, editors, and libraries to build for web, mobile, desktop, games, IoT, and more.</p>
+
+                <h2>Components</h2>
+                <ul>
+                    <li><strong>CoreCLR</strong> - the runtime, JIT compiler and base library for .NET</li>
+                    <li><strong>Mono</strong> - the runtime for mobile and browser platforms (iOS, Android, WASM)</li>
+                    <li><strong>Libraries</strong> - the standard class libraries <code>System.*</code></li>
+                    <li><strong>NativeAOT</strong> - ahead-of-time compilation</li>
+                </ul>
+
+                <h2>How to Build</h2>
+                <h3>Prerequisites</h3>
+                <ul>
+                    <li>Install <a href="https://cmake.org/download/">CMake</a></li>
+                    <li>Install <a href="https://www.python.org/downloads/">Python 3</a></li>
+                </ul>
+
+                <h3>Building on Windows</h3>
+                <pre><code>.\build.cmd -subset clr+libs -configuration Release</code></pre>
+
+                <h3>Building on Linux/macOS</h3>
+                <pre><code>./build.sh -subset clr+libs -configuration Release</code></pre>
+
+                <h2>How to Contribute</h2>
+                <p>We welcome contributions! Please see our <a href="CONTRIBUTING.md">Contributing Guide</a> for more details.</p>
+                <ol>
+                    <li>Fork the repository</li>
+                    <li>Create your feature branch</li>
+                    <li>Submit a pull request</li>
+                </ol>
+
+                <h2>Filing Issues</h2>
+                <p>Use <a href="https://github.com/dotnet/runtime/issues/new">GitHub Issues</a> to file bugs. Please include:</p>
+                <ul>
+                    <li>A clear description of the issue</li>
+                    <li>Steps to reproduce</li>
+                    <li>.NET version (<code>dotnet --info</code>)</li>
+                    <li>Operating system</li>
+                </ul>
+
+                <h2>License</h2>
+                <p>.NET is licensed under the <a href="LICENSE.TXT">MIT license</a>.</p>
+            </article>
+        </main>
+    </div>
+    <footer>
+        <p>&copy; 2025 GitHub, Inc.</p>
+        <nav>
+            <a href="/site/terms">Terms</a>
+            <a href="/site/privacy">Privacy</a>
+            <a href="/security">Security</a>
+        </nav>
+    </footer>
+</body>
+</html>
