@@ -1,4 +1,6 @@
 using System.CommandLine;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 using Ndggr.Cli.Output;
 
 namespace Ndggr.Cli.Commands;
@@ -45,6 +47,31 @@ internal static class SearchCommand
             Description = "Show full URLs"
         };
 
+        var proxyOption = new Option<string?>("-p", "--proxy")
+        {
+            Description = "HTTPS proxy URI (e.g. http://proxy:8080)"
+        };
+
+        var unsafeOption = new Option<bool>("--unsafe")
+        {
+            Description = "Disable safe search"
+        };
+
+        var nouaOption = new Option<bool>("--noua")
+        {
+            Description = "Disable user agent"
+        };
+
+        var instantOption = new Option<bool>("-i", "--instant")
+        {
+            Description = "Show only instant answer"
+        };
+
+        var duckyOption = new Option<bool>("-j", "--ducky")
+        {
+            Description = "Open first result in browser (I'm Feeling Ducky)"
+        };
+
         var command = new Command("search", "Search DuckDuckGo")
         {
             keywordsArgument,
@@ -53,7 +80,12 @@ internal static class SearchCommand
             timeOption,
             siteOption,
             jsonOption,
-            expandOption
+            expandOption,
+            proxyOption,
+            unsafeOption,
+            nouaOption,
+            instantOption,
+            duckyOption
         };
 
         command.SetAction(async (parseResult, cancellationToken) =>
@@ -65,6 +97,13 @@ internal static class SearchCommand
             var site = parseResult.GetValue(siteOption);
             var json = parseResult.GetValue(jsonOption);
             var expand = parseResult.GetValue(expandOption);
+            var proxyStr = parseResult.GetValue(proxyOption);
+            var @unsafe = parseResult.GetValue(unsafeOption);
+            var noua = parseResult.GetValue(nouaOption);
+            var instant = parseResult.GetValue(instantOption);
+            var ducky = parseResult.GetValue(duckyOption);
+
+            var proxy = ResolveProxy(proxyStr);
 
             var query = string.Join(' ', keywords);
             var options = new DdgSearchOptions
@@ -72,7 +111,10 @@ internal static class SearchCommand
                 NumResults = num,
                 Region = region,
                 TimeFilter = time ?? "",
-                Site = site
+                Site = site,
+                SafeSearch = !@unsafe,
+                SendUserAgent = !noua,
+                Proxy = proxy
             };
 
             try
@@ -80,7 +122,15 @@ internal static class SearchCommand
                 using var client = new DdgClient(options);
                 var response = await client.SearchAsync(query, options, cancellationToken);
 
-                if (json)
+                if (ducky)
+                {
+                    HandleDucky(response);
+                }
+                else if (instant)
+                {
+                    ResultFormatter.WriteInstantAnswer(response);
+                }
+                else if (json)
                 {
                     ResultFormatter.WriteJson(response, Console.Out);
                 }
@@ -88,6 +138,10 @@ internal static class SearchCommand
                 {
                     ResultFormatter.WriteConsole(response, expand);
                 }
+            }
+            catch (NdggrException ex)
+            {
+                ResultFormatter.WriteError(ex.Message);
             }
             catch (HttpRequestException ex)
             {
@@ -100,5 +154,39 @@ internal static class SearchCommand
         });
 
         return command;
+    }
+
+    /// <summary>
+    /// Resolve proxy URI with priority: explicit option > HTTPS_PROXY env var.
+    /// </summary>
+    internal static Uri? ResolveProxy(string? explicitProxy) =>
+        ProxyResolver.Resolve(explicitProxy);
+
+    private static void HandleDucky(DdgSearchResponse response)
+    {
+        if (response.Results.Count == 0)
+        {
+            ResultFormatter.WriteError("No results found.");
+            return;
+        }
+
+        var url = response.Results[0].Url;
+        OpenUrl(url);
+    }
+
+    internal static void OpenUrl(string url)
+    {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+        }
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        {
+            Process.Start("open", url);
+        }
+        else
+        {
+            Process.Start("xdg-open", url);
+        }
     }
 }

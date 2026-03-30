@@ -53,12 +53,43 @@ public sealed class DdgClient : IDisposable
         var formData = BuildFormData(query, options);
 
         using var content = new FormUrlEncodedContent(formData);
-        using var response = await _httpClient.PostAsync(DdgHtmlEndpoint, content, cancellationToken).ConfigureAwait(false);
 
-        response.EnsureSuccessStatusCode();
+        HttpResponseMessage response;
+        try
+        {
+            response = await _httpClient.PostAsync(DdgHtmlEndpoint, content, cancellationToken).ConfigureAwait(false);
+        }
+        catch (HttpRequestException ex)
+        {
+            throw new SearchException($"Search request failed: {ex.Message}", ex);
+        }
 
-        var html = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-        return _parser.Parse(html);
+        if ((int)response.StatusCode == 429)
+        {
+            response.Dispose();
+            throw new RateLimitException();
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var statusCode = (int)response.StatusCode;
+            response.Dispose();
+            throw new SearchException($"DuckDuckGo returned HTTP {statusCode}.", statusCode);
+        }
+
+        using (response)
+        {
+            var html = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+
+            // Detect CAPTCHA pages returned by DDG
+            if (html.Contains("atb.js", StringComparison.OrdinalIgnoreCase)
+                && html.Contains("/challenge", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new RateLimitException("DuckDuckGo returned a CAPTCHA challenge.");
+            }
+
+            return _parser.Parse(html);
+        }
     }
 
     private static Dictionary<string, string> BuildFormData(string query, DdgSearchOptions options)

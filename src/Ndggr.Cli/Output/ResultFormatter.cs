@@ -73,6 +73,22 @@ internal static class ResultFormatter
         AnsiConsole.MarkupLine($"[red bold]Error:[/] {Markup.Escape(message)}");
     }
 
+    public static void WriteInstantAnswer(DdgSearchResponse response)
+    {
+        if (response.InstantAnswer is not null)
+        {
+            AnsiConsole.MarkupLine($"  [bold yellow]{Markup.Escape(response.InstantAnswer.Text)}[/]");
+            if (response.InstantAnswer.Url is not null)
+            {
+                AnsiConsole.MarkupLine($"  [blue underline]{Markup.Escape(response.InstantAnswer.Url)}[/]");
+            }
+        }
+        else
+        {
+            AnsiConsole.MarkupLine("[dim]No instant answer available.[/]");
+        }
+    }
+
     private static string GetHost(string url)
     {
         if (Uri.TryCreate(url, UriKind.Absolute, out var uri))

@@ -62,14 +62,183 @@ public class DdgClientTests
         capturedBody.Should().Contain("site%3Agithub.com");
     }
 
-    private sealed class FakeHttpHandler : HttpMessageHandler
+    [Fact]
+    public async Task SearchAsync_Http429_ThrowsRateLimitException()
+    {
+        var handler = new FakeHttpHandler("<html>rate limited</html>", statusCode: HttpStatusCode.TooManyRequests);
+        using var httpClient = new HttpClient(handler);
+        using var client = new DdgClient(httpClient);
+
+        var act = () => client.SearchAsync("test");
+
+        await act.Should().ThrowAsync<RateLimitException>()
+            .WithMessage("*Rate limited*");
+    }
+
+    [Fact]
+    public async Task SearchAsync_Http500_ThrowsSearchException()
+    {
+        var handler = new FakeHttpHandler("<html>error</html>", statusCode: HttpStatusCode.InternalServerError);
+        using var httpClient = new HttpClient(handler);
+        using var client = new DdgClient(httpClient);
+
+        var act = () => client.SearchAsync("test");
+
+        var ex = (await act.Should().ThrowAsync<SearchException>()).Which;
+        ex.StatusCode.Should().Be(500);
+        ex.Message.Should().Contain("500");
+    }
+
+    [Fact]
+    public async Task SearchAsync_Http403_ThrowsSearchException()
+    {
+        var handler = new FakeHttpHandler("<html>forbidden</html>", statusCode: HttpStatusCode.Forbidden);
+        using var httpClient = new HttpClient(handler);
+        using var client = new DdgClient(httpClient);
+
+        var act = () => client.SearchAsync("test");
+
+        var ex = (await act.Should().ThrowAsync<SearchException>()).Which;
+        ex.StatusCode.Should().Be(403);
+    }
+
+    [Fact]
+    public async Task SearchAsync_CaptchaResponse_ThrowsRateLimitException()
+    {
+        // Simulates a DDG CAPTCHA page with the known markers
+        var captchaHtml = """
+            <html>
+            <head><script src="atb.js"></script></head>
+            <body>
+            <form action="/challenge">Please complete the CAPTCHA</form>
+            </body>
+            </html>
+            """;
+        var handler = new FakeHttpHandler(captchaHtml);
+        using var httpClient = new HttpClient(handler);
+        using var client = new DdgClient(httpClient);
+
+        var act = () => client.SearchAsync("test");
+
+        await act.Should().ThrowAsync<RateLimitException>()
+            .WithMessage("*CAPTCHA*");
+    }
+
+    [Fact]
+    public async Task SearchAsync_UnsafeOption_SendsCorrectFormData()
+    {
+        string? capturedBody = null;
+        var handler = new FakeHttpHandler(
+            File.ReadAllText(Path.Combine("Fixtures", "search_results_basic.html")),
+            onRequest: async req =>
+            {
+                if (req.Content is not null)
+                    capturedBody = await req.Content.ReadAsStringAsync();
+            });
+        using var httpClient = new HttpClient(handler);
+        using var client = new DdgClient(httpClient);
+
+        var options = new DdgSearchOptions { SafeSearch = false };
+        await client.SearchAsync("test", options);
+
+        capturedBody.Should().NotBeNull();
+        // kp=-2 means safe search off
+        capturedBody.Should().Contain("kp=-2");
+    }
+
+    [Fact]
+    public async Task SearchAsync_SafeSearchDefault_SendsKp1()
+    {
+        string? capturedBody = null;
+        var handler = new FakeHttpHandler(
+            File.ReadAllText(Path.Combine("Fixtures", "search_results_basic.html")),
+            onRequest: async req =>
+            {
+                if (req.Content is not null)
+                    capturedBody = await req.Content.ReadAsStringAsync();
+            });
+        using var httpClient = new HttpClient(handler);
+        using var client = new DdgClient(httpClient);
+
+        await client.SearchAsync("test");
+
+        capturedBody.Should().NotBeNull();
+        // kp=1 means safe search on
+        capturedBody.Should().Contain("kp=1");
+    }
+
+    [Fact]
+    public async Task SearchAsync_WithRegion_SendsCorrectKl()
+    {
+        string? capturedBody = null;
+        var handler = new FakeHttpHandler(
+            File.ReadAllText(Path.Combine("Fixtures", "search_results_basic.html")),
+            onRequest: async req =>
+            {
+                if (req.Content is not null)
+                    capturedBody = await req.Content.ReadAsStringAsync();
+            });
+        using var httpClient = new HttpClient(handler);
+        using var client = new DdgClient(httpClient);
+
+        var options = new DdgSearchOptions { Region = "de-de" };
+        await client.SearchAsync("test", options);
+
+        capturedBody.Should().NotBeNull();
+        capturedBody.Should().Contain("kl=de-de");
+    }
+
+    [Fact]
+    public async Task SearchAsync_WithTimeFilter_SendsDf()
+    {
+        string? capturedBody = null;
+        var handler = new FakeHttpHandler(
+            File.ReadAllText(Path.Combine("Fixtures", "search_results_basic.html")),
+            onRequest: async req =>
+            {
+                if (req.Content is not null)
+                    capturedBody = await req.Content.ReadAsStringAsync();
+            });
+        using var httpClient = new HttpClient(handler);
+        using var client = new DdgClient(httpClient);
+
+        var options = new DdgSearchOptions { TimeFilter = "w" };
+        await client.SearchAsync("test", options);
+
+        capturedBody.Should().NotBeNull();
+        capturedBody.Should().Contain("df=w");
+    }
+
+    [Fact]
+    public void DdgClient_WithProxy_CreatesSuccessfully()
+    {
+        var options = new DdgSearchOptions { Proxy = new Uri("http://proxy:8080") };
+
+        var act = () => { using var _ = new DdgClient(options); };
+
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void DdgClient_WithNoua_CreatesSuccessfully()
+    {
+        var options = new DdgSearchOptions { SendUserAgent = false };
+
+        var act = () => { using var _ = new DdgClient(options); };
+
+        act.Should().NotThrow();
+    }
+
+    internal sealed class FakeHttpHandler : HttpMessageHandler
     {
         private readonly string _responseHtml;
+        private readonly HttpStatusCode _statusCode;
         private readonly Func<HttpRequestMessage, Task>? _onRequest;
 
-        public FakeHttpHandler(string responseHtml, Func<HttpRequestMessage, Task>? onRequest = null)
+        public FakeHttpHandler(string responseHtml, HttpStatusCode statusCode = HttpStatusCode.OK, Func<HttpRequestMessage, Task>? onRequest = null)
         {
             _responseHtml = responseHtml;
+            _statusCode = statusCode;
             _onRequest = onRequest;
         }
 
@@ -78,7 +247,7 @@ public class DdgClientTests
             if (_onRequest is not null)
                 await _onRequest(request);
 
-            return new HttpResponseMessage(HttpStatusCode.OK)
+            return new HttpResponseMessage(_statusCode)
             {
                 Content = new StringContent(_responseHtml, System.Text.Encoding.UTF8, "text/html")
             };

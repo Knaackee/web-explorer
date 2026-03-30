@@ -11,6 +11,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Ndggr.Tests.Unit" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Ndggr\Ndggr.csproj" />
     <ProjectReference Include="..\Ndggr.Extensions\Ndggr.Extensions.csproj" />
   </ItemGroup>

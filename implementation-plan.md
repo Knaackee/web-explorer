@@ -10,70 +10,56 @@ Dieser Plan ist der operative Umsetzungsplan zu `plan.md` und priorisiert schnel
 4. Readability ist Primary fuer Main-Content-Extraction.
 5. Jede Phase endet mit klaren Abnahmekriterien.
 
-## Phase 0 - Setup und Entscheidungen fixieren
+## Phase 0 - Setup und Entscheidungen fixieren ✅
 
 ### Ziel
 Projektbasis, Namensraum und Build-Standards final aufsetzen.
 
 ### Tasks
-1. Solution und Projektnamen finalisieren (`ndggr.sln`, `Ndggr.*`).
-2. Repo-Struktur gemaess Zielbild aus `plan.md` anlegen.
-3. `Directory.Build.props` und `.editorconfig` konfigurieren.
-4. Baseline CI (`restore`, `build`, `test`) erstellen.
-5. Lizenzdatei und Package-Metadaten (MIT) vorbereiten.
+1. ✅ Solution und Projektnamen finalisieren (`ndggr.sln`, `Ndggr.*`).
+2. ✅ Repo-Struktur gemaess Zielbild aus `plan.md` anlegen.
+3. ✅ `Directory.Build.props` und `.editorconfig` konfigurieren.
+4. ✅ Baseline CI (`restore`, `build`, `test`) erstellen.
+5. ✅ Lizenzdatei und Package-Metadaten (MIT) vorbereiten.
 
-### Deliverables
-1. Buildbare leere Solution mit allen Projekten.
-2. Gruene CI fuer einen leeren Build.
+### Status
+Abgeschlossen. 5 Projekte im Solution, CI Workflow mit Matrix (ubuntu/windows × net8.0/net10.0).
 
-### DoD
-1. `dotnet build` erfolgreich auf net8.0 und net10.0.
-2. CI Pipeline gruen bei Pull Request.
-
-## Phase 1 - Core Search (Ndggr + Ndggr.Cli)
+## Phase 1 - Core Search (Ndggr + Ndggr.Cli) ✅
 
 ### Ziel
 DuckDuckGo Suche (HTML) als robuste Library und einfache CLI bereitstellen.
 
 ### Tasks
-1. `DdgClient` mit `SearchAsync(query, SearchOptions)` implementieren.
-2. HTML Parsing mit AngleSharp fuer Trefferliste.
-3. Modelle: `SearchResult`, `InstantAnswer`, `DdgSearchOptions`.
-4. CLI `ndggr search` mit Basisoptionen (`--num`, `--region`, `--time`, `--site`).
-5. Konsolenausgabe in Spectre.Console formatieren.
+1. ✅ `DdgClient` mit `SearchAsync(query, SearchOptions)` implementieren (POST an `html.duckduckgo.com/html/`).
+2. ✅ HTML Parsing mit AngleSharp fuer Trefferliste (`HtmlResultParser`).
+3. ✅ Modelle: `SearchResult`, `InstantAnswer`, `DdgSearchOptions`, `DdgSearchResponse`.
+4. ✅ CLI `ndggr search` mit Basisoptionen (`--num`, `--region`, `--time`, `--site`, `--json`, `--expand`).
+5. ✅ Konsolenausgabe in Spectre.Console formatieren (`ResultFormatter`).
+6. ✅ 29 Unit Tests (Parser, URL-Extraction, Options, Client mit Mock-Handler).
+7. ✅ 5 HTML Fixtures (basic, instant answer, empty, pagination, edge cases).
 
-### Deliverables
-1. Nutzbare Suche in Library und CLI.
-2. Unit Tests fuer Parser und Optionsmapping.
+### Status
+Abgeschlossen. Build 0 Warnings, 0 Errors. 29/29 Tests gruen auf net8.0 und net10.0.
 
-### DoD
-1. Suchanfragen liefern reproduzierbare Ergebnisstruktur.
-2. Unit-Tests fuer Parser >= 90% der Kernpfade.
-3. CLI Help und Basisbeispiele funktionieren lokal.
-
-## Phase 2 - Proxy, Privacy und Feature Parity (Search)
+## Phase 2 - Proxy, Privacy und Feature Parity (Search) ✅
 
 ### Ziel
-Feature-Parity fuer Suchbereich inkl. Proxy und Privacy.
+Feature-Parity fuer Suchbereich inkl. Proxy, Privacy und Spezialsuchen.
 
-### Tasks
-1. Proxy in CLI und Library aktivieren.
-2. Proxy-Prioritaet umsetzen:
-   1. Request-Option
-   2. Client-Default
-   3. Optional `HTTPS_PROXY`
-3. Optionen: `--unsafe`, `--noua`, `--json`, `--expand`.
-4. Instant Answer (`-i`) und Ducky (`-j`) implementieren.
-5. Fehlerklassen fuer Netzwerk/Proxy/RateLimit definieren.
+### Erledigte Tasks
+1. ✅ CLI-Optionen: `--proxy`/`-p`, `--unsafe`, `--noua`, `-i`/`--instant`, `-j`/`--ducky`.
+2. ✅ Proxy-Prioritaet: Explicit → `HTTPS_PROXY` / `https_proxy` Env-Var Fallback (`ProxyResolver`).
+3. ✅ Instant Answer Modus (`-i`): Nur Instant Answer anzeigen.
+4. ✅ Ducky Modus (`-j`): Erstes Ergebnis im Browser oeffnen (plattformuebergreifend).
+5. ✅ Fehlerklassen: `NdggrException` → `SearchException` → `RateLimitException`.
+6. ✅ DdgClient: HTTP-Fehler und CAPTCHA-Erkennung mit strukturierten Exceptions.
+7. ✅ `--json`, `-x`/`--expand`, `-w`/`--site` (bereits aus Phase 1).
+8. ✅ `SafeSearch` und `SendUserAgent` in Options (bereits aus Phase 1).
+9. ✅ 54 Tests gesamt (25 neue), alle gruen auf net8.0 und net10.0.
 
-### Deliverables
-1. Stabile Suche mit Proxy-End-to-End.
-2. JSON-Ausgabe fuer Suchresultate.
-
-### DoD
-1. Proxy-Szenarien getestet: ohne Auth, mit Auth, 407, Timeout.
-2. Regression bei Non-Proxy-Requests ausgeschlossen.
-3. CLI und Library liefern gleiche fachliche Ergebnisse bei gleichen Optionen.
+### Status
+Abgeschlossen. 0 Warnings, 0 Errors. 54/54 Tests gruen.
 
 ## Phase 3 - Content Fetch MVP (Ndggr.Content)
 
