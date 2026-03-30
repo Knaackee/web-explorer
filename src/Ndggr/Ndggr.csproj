@@ -7,11 +7,20 @@
     <PackageId>Ndggr</PackageId>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Authors>dggr.net contributors</Authors>
+    <PackageTags>duckduckgo;search;ddg;web-search</PackageTags>
+    <RepositoryUrl>https://github.com/ndggr/ndggr</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <Version>0.1.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
     <InternalsVisibleTo Include="Ndggr.Tests.Unit" />
     <InternalsVisibleTo Include="Ndggr.Benchmarks" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <ItemGroup>

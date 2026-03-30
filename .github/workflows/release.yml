@@ -1,0 +1,152 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  packages: write
+
+env:
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+          dotnet-quality: preview
+
+      - name: Restore
+        run: dotnet restore ndggr.sln
+
+      - name: Build
+        run: dotnet build ndggr.sln --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test ndggr.sln --no-build --configuration Release
+
+  pack-nuget:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+          dotnet-quality: preview
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Pack Ndggr
+        run: dotnet pack src/Ndggr/Ndggr.csproj -c Release -o ./nupkgs /p:Version=${{ steps.version.outputs.VERSION }}
+
+      - name: Pack Ndggr.Content
+        run: dotnet pack src/Ndggr.Content/Ndggr.Content.csproj -c Release -o ./nupkgs /p:Version=${{ steps.version.outputs.VERSION }}
+
+      - name: Pack Ndggr.Extensions
+        run: dotnet pack src/Ndggr.Extensions/Ndggr.Extensions.csproj -c Release -o ./nupkgs /p:Version=${{ steps.version.outputs.VERSION }}
+
+      - name: Upload NuGet packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: nupkgs
+          path: ./nupkgs/*.nupkg
+
+  publish-cli:
+    needs: build-and-test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+            artifact: ndggr-win-x64.exe
+          - os: windows-latest
+            rid: win-arm64
+            artifact: ndggr-win-arm64.exe
+          - os: ubuntu-latest
+            rid: linux-x64
+            artifact: ndggr-linux-x64
+          - os: ubuntu-latest
+            rid: linux-arm64
+            artifact: ndggr-linux-arm64
+          - os: macos-latest
+            rid: osx-x64
+            artifact: ndggr-osx-x64
+          - os: macos-latest
+            rid: osx-arm64
+            artifact: ndggr-osx-arm64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+          dotnet-quality: preview
+
+      - name: Publish CLI
+        run: >
+          dotnet publish src/Ndggr.Cli/Ndggr.Cli.csproj
+          -c Release
+          -r ${{ matrix.rid }}
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -o ./publish
+
+      - name: Rename binary (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: mv ./publish/ndggr-cli ${{ matrix.artifact }}
+
+      - name: Rename binary (Windows)
+        if: runner.os == 'Windows'
+        run: mv ./publish/ndggr-cli.exe ${{ matrix.artifact }}
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.artifact }}
+
+  create-release:
+    needs: [pack-nuget, publish-cli]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            ./artifacts/nupkgs/*.nupkg
+            ./artifacts/ndggr-win-x64.exe/ndggr-win-x64.exe
+            ./artifacts/ndggr-win-arm64.exe/ndggr-win-arm64.exe
+            ./artifacts/ndggr-linux-x64/ndggr-linux-x64
+            ./artifacts/ndggr-linux-arm64/ndggr-linux-arm64
+            ./artifacts/ndggr-osx-x64/ndggr-osx-x64
+            ./artifacts/ndggr-osx-arm64/ndggr-osx-arm64

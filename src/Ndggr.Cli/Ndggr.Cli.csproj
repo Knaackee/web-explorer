@@ -8,6 +8,12 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>ndggr</ToolCommandName>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Authors>dggr.net contributors</Authors>
+    <Version>0.1.0</Version>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <PublishTrimmed>false</PublishTrimmed>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
   </PropertyGroup>
 
   <ItemGroup>

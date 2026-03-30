@@ -148,22 +148,24 @@ Leistung messbar machen und regressionssicher halten.
 1. Keine unerkannte Performance-Regression in PRs.
 2. Benchmarks als Artefakte verfuegbar.
 
-## Phase 7 - Packaging, Release und README
+## Phase 7 - Packaging, Release und README ✅
 
 ### Ziel
 Produktionsreife Auslieferung fuer CLI und NuGet.
 
-### Tasks
-1. NuGet Pack fuer `Ndggr`, `Ndggr.Content`, `Ndggr.Extensions`.
-2. Self-contained Single-File CLI Binaries fuer:
-   1. win-x64, win-arm64
-   2. linux-x64, linux-arm64
-   3. osx-x64, osx-arm64
-3. Release Workflow mit Tag-Trigger finalisieren.
-4. README final schreiben:
-   1. Weiterentwicklung von ddgr in .NET
-   2. Vorteile (Single-file exe, library, fetch, proxy, json/jsonl)
-   3. Quickstarts fuer CLI und Library
+### Erledigte Tasks
+1. ✅ NuGet Pack fuer `Ndggr`, `Ndggr.Content`, `Ndggr.Extensions` (Version 0.1.0, MIT, Tags, Repository).
+2. ✅ Self-contained Single-File CLI Binaries konfiguriert fuer:
+   - win-x64, win-arm64
+   - linux-x64, linux-arm64
+   - osx-x64, osx-arm64
+3. ✅ Release Workflow (`release.yml`) mit Tag-Trigger (v*), Build+Test, NuGet Pack, CLI Publish, GitHub Release.
+4. ✅ README mit:
+   - Vorteile (Single-file exe, library, fetch, proxy, json/jsonl)
+   - Quickstarts fuer CLI und Library (Search + Fetch)
+   - DI Integration Beispiel
+   - ContentDocument JSON Schema v1 Dokumentation
+   - Projektstruktur, Environment Variables, Requirements
 
 ### Deliverables
 1. Erstes lauffaehiges Release (v0.x).

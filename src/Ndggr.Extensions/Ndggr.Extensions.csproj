@@ -3,9 +3,14 @@
   <PropertyGroup>
     <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
     <RootNamespace>Ndggr.Extensions</RootNamespace>
-    <Description>Extensions and DI integration for ndggr</Description>
+    <Description>DI integration and facade API for ndggr search and content extraction</Description>
     <PackageId>Ndggr.Extensions</PackageId>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Authors>dggr.net contributors</Authors>
+    <PackageTags>duckduckgo;search;content-extraction;dependency-injection</PackageTags>
+    <RepositoryUrl>https://github.com/ndggr/ndggr</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <Version>0.1.0</Version>
   </PropertyGroup>
 
   <ItemGroup>

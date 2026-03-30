@@ -3,9 +3,14 @@
   <PropertyGroup>
     <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
     <RootNamespace>Ndggr.Content</RootNamespace>
-    <Description>URL content extraction for LLM workflows</Description>
+    <Description>URL content extraction for LLM workflows - Readability, Markdown, JSON</Description>
     <PackageId>Ndggr.Content</PackageId>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Authors>dggr.net contributors</Authors>
+    <PackageTags>content-extraction;readability;markdown;web-scraping;llm</PackageTags>
+    <RepositoryUrl>https://github.com/ndggr/ndggr</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <Version>0.1.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
