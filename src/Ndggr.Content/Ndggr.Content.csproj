@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <RootNamespace>Ndggr.Content</RootNamespace>
+    <Description>URL content extraction for LLM workflows</Description>
+    <PackageId>Ndggr.Content</PackageId>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ndggr\Ndggr.csproj" />
+  </ItemGroup>
+
+</Project>
