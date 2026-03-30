@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Ndggr\Ndggr.csproj" />
+    <ProjectReference Include="..\Ndggr.Content\Ndggr.Content.csproj" />
   </ItemGroup>
 
   <ItemGroup>
