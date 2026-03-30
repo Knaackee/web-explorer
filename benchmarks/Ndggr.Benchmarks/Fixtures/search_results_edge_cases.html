@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DuckDuckGo</title>
+</head>
+<body>
+<div id="links">
+
+    <div class="results_links results_links_deep web-result">
+        <div class="links_main links_deep result__body">
+            <h2 class="result__title">
+                <a rel="nofollow" class="result__a" href="https://example.com/direct-url">
+                    Direct URL Result
+                </a>
+            </h2>
+            <a class="result__snippet" href="https://example.com/direct-url">
+                This result has a direct URL without DDG redirect wrapper.
+            </a>
+        </div>
+    </div>
+
+    <div class="results_links results_links_deep web-result">
+        <div class="links_main links_deep result__body">
+            <h2 class="result__title">
+                <a rel="nofollow" class="result__a" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fexample.com%2Fpath%3Fquery%3Dvalue%26other%3D1&amp;rut=xyz">
+                    URL With Query Parameters
+                </a>
+            </h2>
+            <a class="result__snippet" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fexample.com%2Fpath%3Fquery%3Dvalue%26other%3D1&amp;rut=xyz">
+                Result containing URL with query parameters.
+            </a>
+        </div>
+    </div>
+
+    <div class="results_links results_links_deep web-result">
+        <div class="links_main links_deep result__body">
+            <h2 class="result__title">
+                <a rel="nofollow" class="result__a" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fexample.com%2Fpath%2Fwith%2520spaces&amp;rut=xyz">
+                    URL With Encoded Spaces
+                </a>
+            </h2>
+            <a class="result__snippet" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fexample.com%2Fpath%2Fwith%2520spaces&amp;rut=xyz">
+                Result whose URL contains encoded spaces.
+            </a>
+        </div>
+    </div>
+
+    <div class="results_links results_links_deep web-result">
+        <div class="links_main links_deep result__body">
+            <h2 class="result__title">
+                <a rel="nofollow" class="result__a" href="">
+                </a>
+            </h2>
+            <a class="result__snippet" href="">
+                This result has an empty URL and title and should be skipped.
+            </a>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

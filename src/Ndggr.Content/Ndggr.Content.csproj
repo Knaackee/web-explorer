@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Ndggr.Tests.Unit" />
+    <InternalsVisibleTo Include="Ndggr.Benchmarks" />
   </ItemGroup>
 
   <ItemGroup>

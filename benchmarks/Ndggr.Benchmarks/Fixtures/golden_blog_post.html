@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Building a REST API with ASP.NET Core - Developer Blog</title>
+    <meta name="author" content="Alex Tech">
+    <meta property="article:published_time" content="2025-09-20">
+    <meta property="og:site_name" content="Developer Blog">
+    <meta name="description" content="A step-by-step guide to building a production-ready REST API with ASP.NET Core 10">
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="/">Home</a>
+            <a href="/blog">Blog</a>
+            <a href="/about">About</a>
+            <a href="/contact">Contact</a>
+        </nav>
+        <div class="social">
+            <a href="https://twitter.com/devblog">Twitter</a>
+            <a href="https://github.com/devblog">GitHub</a>
+        </div>
+    </header>
+    <aside class="sidebar">
+        <h3>Recent Posts</h3>
+        <ul>
+            <li><a href="/post/docker-tips">Docker Tips</a></li>
+            <li><a href="/post/kubernetes-101">Kubernetes 101</a></li>
+            <li><a href="/post/ci-cd-pipelines">CI/CD Best Practices</a></li>
+        </ul>
+        <h3>Tags</h3>
+        <div class="tags">
+            <a href="/tag/aspnet">ASP.NET</a>
+            <a href="/tag/csharp">C#</a>
+            <a href="/tag/api">API</a>
+        </div>
+        <div class="ad">Sponsored: Learn Kubernetes at KubeAcademy</div>
+    </aside>
+    <main>
+        <article>
+            <h1>Building a REST API with ASP.NET Core</h1>
+            <div class="meta">
+                <span class="author">By Alex Tech</span>
+                <time datetime="2025-09-20">September 20, 2025</time>
+                <span class="read-time">10 min read</span>
+            </div>
+
+            <p>Building a REST API is one of the most common tasks for backend developers. In this guide, we will walk through creating a production-ready API using ASP.NET Core 10.</p>
+
+            <h2>Prerequisites</h2>
+            <p>Before we begin, make sure you have the following installed:</p>
+            <ul>
+                <li>.NET 10 SDK</li>
+                <li>Visual Studio 2025 or VS Code</li>
+                <li>SQL Server or PostgreSQL</li>
+            </ul>
+
+            <h2>Project Setup</h2>
+            <p>Start by creating a new web API project:</p>
+            <pre><code>dotnet new webapi -n MyApi
+cd MyApi</code></pre>
+            <p>This creates a minimal API template with a weather forecast endpoint. We will replace this with our own domain model.</p>
+
+            <h2>Defining the Model</h2>
+            <p>For this tutorial, we will build a simple task management API. Let's define our model:</p>
+            <pre><code>public class TodoItem
+{
+    public int Id { get; set; }
+    public string Title { get; set; } = "";
+    public bool IsComplete { get; set; }
+    public DateTime CreatedAt { get; set; }
+}</code></pre>
+
+            <h2>Setting Up Entity Framework Core</h2>
+            <p>Add the Entity Framework Core packages:</p>
+            <pre><code>dotnet add package Microsoft.EntityFrameworkCore.SqlServer
+dotnet add package Microsoft.EntityFrameworkCore.Design</code></pre>
+            <p>Create the database context and configure the connection in <code>Program.cs</code>.</p>
+
+            <h2>Creating the API Endpoints</h2>
+            <p>With minimal APIs, defining endpoints is straightforward:</p>
+            <pre><code>app.MapGet("/api/todos", async (TodoDb db) =&gt;
+    await db.Todos.ToListAsync());
+
+app.MapPost("/api/todos", async (TodoItem todo, TodoDb db) =&gt;
+{
+    db.Todos.Add(todo);
+    await db.SaveChangesAsync();
+    return Results.Created($"/api/todos/{todo.Id}", todo);
+});</code></pre>
+
+            <h2>Adding Validation</h2>
+            <p>Input validation is critical for security. Use FluentValidation or data annotations to ensure all input meets your requirements.</p>
+            <p>Never trust user input. Always validate on the server side, even if you have client-side validation.</p>
+
+            <h2>Error Handling</h2>
+            <p>Implement global error handling with middleware to return consistent error responses:</p>
+            <pre><code>app.UseExceptionHandler("/error");
+app.Map("/error", (HttpContext context) =&gt;
+{
+    return Results.Problem();
+});</code></pre>
+
+            <h2>Conclusion</h2>
+            <p>ASP.NET Core makes it easy to build performant, production-ready APIs. The minimal API approach reduces boilerplate while maintaining full access to the framework's capabilities.</p>
+            <p>You can find the complete source code on <a href="https://github.com/devblog/rest-api-tutorial">GitHub</a>.</p>
+        </article>
+    </main>
+    <section class="comments">
+        <h3>Comments (12)</h3>
+        <div class="comment">Great tutorial! Very helpful for beginners.</div>
+        <div class="comment">Would love to see a follow-up on authentication.</div>
+    </section>
+    <footer>
+        <p>&copy; 2025 Developer Blog. All rights reserved.</p>
+        <a href="/privacy">Privacy</a> | <a href="/rss">RSS Feed</a>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>ConcurrentDictionary&lt;TKey,TValue&gt; Class (System.Collections.Concurrent) | Microsoft Learn</title>
+    <meta name="author" content="Microsoft">
+    <meta property="og:site_name" content="Microsoft Learn">
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="/">Learn</a>
+            <a href="/dotnet">.NET</a>
+            <a href="/dotnet/api">API Reference</a>
+        </nav>
+        <div class="breadcrumb">System.Collections.Concurrent &gt; ConcurrentDictionary</div>
+    </header>
+    <main>
+        <article>
+            <h1>ConcurrentDictionary&lt;TKey,TValue&gt; Class</h1>
+            <div class="api-meta">
+                <span>Namespace: System.Collections.Concurrent</span>
+                <span>Assembly: System.Collections.Concurrent.dll</span>
+            </div>
+
+            <p>Represents a thread-safe collection of key/value pairs that can be accessed by multiple threads concurrently.</p>
+
+            <h2>Definition</h2>
+            <pre><code>public class ConcurrentDictionary&lt;TKey,TValue&gt; : IDictionary&lt;TKey,TValue&gt;,
+    ICollection&lt;KeyValuePair&lt;TKey,TValue&gt;&gt;, IReadOnlyDictionary&lt;TKey,TValue&gt;
+    where TKey : notnull</code></pre>
+
+            <h2>Remarks</h2>
+            <p>For very large <code>ConcurrentDictionary&lt;TKey,TValue&gt;</code> objects, you can increase the maximum array size to 2 gigabytes (GB) on a 64-bit system by setting the <code>gcAllowVeryLargeObjects</code> configuration element to <code>true</code> in the run-time environment.</p>
+
+            <p>All public and protected members of <code>ConcurrentDictionary&lt;TKey,TValue&gt;</code> are thread-safe and may be used concurrently from multiple threads. However, members accessed through one of the interfaces implement, including extension methods, are not guaranteed to be thread safe.</p>
+
+            <h2>Constructors</h2>
+            <table>
+                <thead><tr><th>Constructor</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td><code>ConcurrentDictionary&lt;TKey,TValue&gt;()</code></td>
+                        <td>Initializes a new instance that is empty, has the default concurrency level, has the default initial capacity, and uses the default comparer.</td>
+                    </tr>
+                    <tr>
+                        <td><code>ConcurrentDictionary&lt;TKey,TValue&gt;(IEqualityComparer&lt;TKey&gt;)</code></td>
+                        <td>Initializes a new instance that is empty, has the default concurrency level and capacity, and uses the specified comparer.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h2>Methods</h2>
+            <table>
+                <thead><tr><th>Method</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td><a href="/dotnet/api/system.collections.concurrent.concurrentdictionary-2.tryadd">TryAdd(TKey, TValue)</a></td>
+                        <td>Attempts to add the specified key and value to the dictionary.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="/dotnet/api/system.collections.concurrent.concurrentdictionary-2.trygetvalue">TryGetValue(TKey, TValue)</a></td>
+                        <td>Attempts to get the value associated with the specified key.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="/dotnet/api/system.collections.concurrent.concurrentdictionary-2.tryremove">TryRemove(TKey, TValue)</a></td>
+                        <td>Attempts to remove and return the value with the specified key.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="/dotnet/api/system.collections.concurrent.concurrentdictionary-2.getorAdd">GetOrAdd(TKey, TValue)</a></td>
+                        <td>Adds a key/value pair if the key does not already exist. Returns the new or existing value.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="/dotnet/api/system.collections.concurrent.concurrentdictionary-2.addorupdate">AddOrUpdate(TKey, TValue, Func)</a></td>
+                        <td>Adds a key/value pair if the key does not exist, or updates if it does.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h2>Thread Safety</h2>
+            <p>All public members of <code>ConcurrentDictionary&lt;TKey,TValue&gt;</code> are thread-safe. The dictionary uses fine-grained locking to allow concurrent reads and a linear number of writes with low contention.</p>
+
+            <h2>See Also</h2>
+            <ul>
+                <li><a href="/dotnet/api/system.collections.generic.dictionary-2">Dictionary&lt;TKey,TValue&gt;</a></li>
+                <li><a href="/dotnet/standard/collections/thread-safe">Thread-Safe Collections</a></li>
+            </ul>
+        </article>
+    </main>
+    <footer>
+        <p>&copy; Microsoft 2025. Licensed under Creative Commons Attribution 4.0.</p>
+    </footer>
+</body>
+</html>

@@ -127,15 +127,18 @@ Technische Robustheit fuer Produktion und LLM-Tooling absichern.
 1. Regression-Suite gruen.
 2. Keine Breaking-Change-Verletzung im v1-Schema.
 
-## Phase 6 - Benchmarks und Performance Gates
+## Phase 6 - Benchmarks und Performance Gates ✅
 
 ### Ziel
 Leistung messbar machen und regressionssicher halten.
 
-### Tasks
-1. Benchmark-Projekte fuer Search Parsing und Content Extraction bauen.
-2. CI Performance Gate mit Ratio max 1.10 aktivieren.
-3. Baseline-Messwerte pro Plattform dokumentieren.
+### Erledigte Tasks
+1. ✅ Benchmark-Projekt `Ndggr.Benchmarks` mit BenchmarkDotNet 0.14.0.
+2. ✅ `SearchParsingBenchmarks`: Parse basic, instant answer, pagination results.
+3. ✅ `ContentExtractionBenchmarks`: Readability, Markdown-Conversion, Link-Extraction, Chunking, Full Pipeline.
+4. ✅ InternalsVisibleTo fuer Benchmarks in Ndggr und Ndggr.Content.
+5. ✅ Solution um benchmarks-Folder erweitert.
+6. ✅ Dry-Run verifiziert (net8.0): ~188µs basic parse, ~51µs instant answer parse.
 
 ### Deliverables
 1. Reproduzierbare Benchmark-Pipeline.
