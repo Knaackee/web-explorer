@@ -24,3 +24,6 @@ Thumbs.db
 BenchmarkDotNet.Artifacts/
 TestResults/
 coverage/
+
+## Integration test output
+tests/Ndggr.Tests.Integration/output/
