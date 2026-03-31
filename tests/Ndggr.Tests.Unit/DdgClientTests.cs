@@ -10,7 +10,8 @@ public class DdgClientTests
     [Fact]
     public async Task SearchAsync_ThrowsOnNullQuery()
     {
-        using var client = new DdgClient();
+        using var httpClient = new HttpClient();
+        using var client = new DdgClient(httpClient);
 
         var act = () => client.SearchAsync(null!);
 
@@ -20,7 +21,8 @@ public class DdgClientTests
     [Fact]
     public async Task SearchAsync_ThrowsOnEmptyQuery()
     {
-        using var client = new DdgClient();
+        using var httpClient = new HttpClient();
+        using var client = new DdgClient(httpClient);
 
         var act = () => client.SearchAsync("   ");
 
@@ -105,12 +107,35 @@ public class DdgClientTests
     [Fact]
     public async Task SearchAsync_CaptchaResponse_ThrowsRateLimitException()
     {
-        // Simulates a DDG CAPTCHA page with the known markers
+        // Simulates a DDG CAPTCHA page with the legacy markers
         var captchaHtml = """
             <html>
             <head><script src="atb.js"></script></head>
             <body>
             <form action="/challenge">Please complete the CAPTCHA</form>
+            </body>
+            </html>
+            """;
+        var handler = new FakeHttpHandler(captchaHtml);
+        using var httpClient = new HttpClient(handler);
+        using var client = new DdgClient(httpClient);
+
+        var act = () => client.SearchAsync("test");
+
+        await act.Should().ThrowAsync<RateLimitException>()
+            .WithMessage("*CAPTCHA*");
+    }
+
+    [Fact]
+    public async Task SearchAsync_AnomalyCaptchaResponse_ThrowsRateLimitException()
+    {
+        // Simulates the current (2025+) DDG bot-check page with anomaly.js
+        var captchaHtml = """
+            <html>
+            <body>
+            <form id="challenge-form" action="//duckduckgo.com/anomaly.js?sv=html&cc=botnet" method="POST">
+            <div class="anomaly-modal__title">Unfortunately, bots use DuckDuckGo too.</div>
+            </form>
             </body>
             </html>
             """;
@@ -210,23 +235,22 @@ public class DdgClientTests
     }
 
     [Fact]
-    public void DdgClient_WithProxy_CreatesSuccessfully()
+    public void DdgSearchOptions_WithProxy_StoresUri()
     {
         var options = new DdgSearchOptions { Proxy = new Uri("http://proxy:8080") };
 
-        var act = () => { using var _ = new DdgClient(options); };
-
-        act.Should().NotThrow();
+        options.Proxy.Should().NotBeNull();
+        options.Proxy!.Host.Should().Be("proxy");
     }
 
     [Fact]
-    public void DdgClient_WithNoua_CreatesSuccessfully()
+    public void DdgSearchOptions_Defaults_AreCorrect()
     {
-        var options = new DdgSearchOptions { SendUserAgent = false };
+        var options = new DdgSearchOptions();
 
-        var act = () => { using var _ = new DdgClient(options); };
-
-        act.Should().NotThrow();
+        options.Region.Should().Be("us-en");
+        options.SafeSearch.Should().BeTrue();
+        options.NumResults.Should().Be(10);
     }
 
     internal sealed class FakeHttpHandler : HttpMessageHandler

@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <PackageReference Include="AngleSharp" Version="1.4.0" />
+    <PackageReference Include="Primp" Version="0.1.0" />
     <PackageReference Include="ReverseMarkdown" Version="5.2.0" />
     <PackageReference Include="SmartReader" Version="0.11.0" />
   </ItemGroup>

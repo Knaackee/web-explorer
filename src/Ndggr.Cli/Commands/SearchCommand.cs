@@ -3,6 +3,8 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Ndggr.Cli.Output;
 
+#pragma warning disable CS0618 // SendUserAgent is obsolete
+
 namespace Ndggr.Cli.Commands;
 
 internal static class SearchCommand

@@ -10,7 +10,8 @@ public class ContentFetchClientTests
     [Fact]
     public async Task FetchHtmlAsync_ThrowsOnEmptyUrl()
     {
-        using var client = new ContentFetchClient();
+        using var httpClient = new HttpClient();
+        using var client = new ContentFetchClient(httpClient);
 
         var act = () => client.FetchHtmlAsync("");
 

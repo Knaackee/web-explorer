@@ -240,3 +240,9 @@ ndggr.sln
 ## License
 
 [MIT](LICENSE)
+
+## Credits
+
+- [ddgr](https://github.com/jarun/ddgr) — Original Python CLI that inspired this project
+- [primp.net](https://github.com/Knaackee/primp.net) — .NET bridge for browser TLS/HTTP2 impersonation (avoids CAPTCHA detection)
+- [primp](https://github.com/deedy5/primp) by deedy5 — The underlying Rust HTTP client with browser fingerprinting

@@ -31,8 +31,9 @@ public sealed record DdgSearchOptions
     public bool SafeSearch { get; init; } = true;
 
     /// <summary>
-    /// Send a User-Agent header (default true).
+    /// Send a User-Agent header. No longer used — Primp handles browser headers automatically.
     /// </summary>
+    [Obsolete("PrimpClient manages browser headers automatically. This property is ignored.")]
     public bool SendUserAgent { get; init; } = true;
 
     /// <summary>

@@ -1,45 +1,55 @@
 using System.Net;
-using System.Text;
 using Ndggr.Parsing;
+using Primp;
 
 namespace Ndggr;
 
 /// <summary>
 /// Client for searching DuckDuckGo via the HTML endpoint.
+/// Uses Primp (browser TLS/HTTP2 impersonation) to avoid CAPTCHA detection.
 /// </summary>
 public sealed class DdgClient : IDisposable
 {
     private const string DdgHtmlEndpoint = "https://html.duckduckgo.com/html/";
 
-    private const string DefaultUserAgent =
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
-
-    private readonly HttpClient _httpClient;
+    private readonly PrimpClient? _primpClient;
+    private readonly HttpClient? _httpClient;
     private readonly HtmlResultParser _parser = new();
-    private readonly bool _ownsHttpClient;
+    private readonly bool _ownsClient;
 
     public DdgClient()
-        : this(CreateDefaultHandler(proxy: null), sendUserAgent: true)
+        : this(proxy: null)
     {
     }
 
     public DdgClient(DdgSearchOptions defaultOptions)
-        : this(CreateDefaultHandler(defaultOptions.Proxy), defaultOptions.SendUserAgent)
+        : this(proxy: defaultOptions.Proxy)
     {
     }
 
-    public DdgClient(HttpMessageHandler handler, bool sendUserAgent = true)
+    private DdgClient(Uri? proxy)
     {
-        _httpClient = new HttpClient(handler, disposeHandler: true);
-        _ownsHttpClient = true;
+        var builder = PrimpClient.Builder()
+            .WithImpersonate(Impersonate.Chrome146)
+            .WithOS(ImpersonateOS.Windows)
+            .WithTimeout(TimeSpan.FromSeconds(30))
+            .WithCookieStore(true)
+            .FollowRedirects(true);
 
-        ConfigureClient(sendUserAgent);
+        if (proxy is not null)
+            builder = builder.WithProxy(proxy.AbsoluteUri);
+
+        _primpClient = builder.Build();
+        _ownsClient = true;
     }
 
+    /// <summary>
+    /// Internal constructor for unit testing with a mock HttpClient.
+    /// </summary>
     internal DdgClient(HttpClient httpClient)
     {
         _httpClient = httpClient;
-        _ownsHttpClient = false;
+        _ownsClient = false;
     }
 
     /// <summary>
@@ -52,45 +62,52 @@ public sealed class DdgClient : IDisposable
         options ??= new DdgSearchOptions();
         var formData = BuildFormData(query, options);
 
-        using var content = new FormUrlEncodedContent(formData);
+        int statusCode;
+        string html;
 
-        HttpResponseMessage response;
         try
         {
-            response = await _httpClient.PostAsync(DdgHtmlEndpoint, content, cancellationToken).ConfigureAwait(false);
+            if (_primpClient is not null)
+            {
+                var formBody = FormUrlEncode(formData);
+                using var response = await _primpClient.PostAsync(
+                    DdgHtmlEndpoint, formBody, "application/x-www-form-urlencoded");
+                statusCode = (int)response.StatusCode;
+                html = response.ReadAsString();
+            }
+            else
+            {
+                using var content = new FormUrlEncodedContent(formData);
+                using var response = await _httpClient!.PostAsync(DdgHtmlEndpoint, content, cancellationToken).ConfigureAwait(false);
+                statusCode = (int)response.StatusCode;
+                html = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+            }
         }
         catch (HttpRequestException ex)
         {
             throw new SearchException($"Search request failed: {ex.Message}", ex);
         }
-
-        if ((int)response.StatusCode == 429)
+        catch (PrimpException ex)
         {
-            response.Dispose();
+            throw new SearchException($"Search request failed: {ex.Message}", ex);
+        }
+
+        if (statusCode == 429)
             throw new RateLimitException();
-        }
 
-        if (!response.IsSuccessStatusCode)
-        {
-            var statusCode = (int)response.StatusCode;
-            response.Dispose();
+        if (statusCode < 200 || statusCode >= 300)
             throw new SearchException($"DuckDuckGo returned HTTP {statusCode}.", statusCode);
-        }
 
-        using (response)
-        {
-            var html = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+        // Detect CAPTCHA / bot-check pages returned by DDG
+        if (IsCaptchaPage(html))
+            throw new RateLimitException("DuckDuckGo returned a CAPTCHA challenge.");
 
-            // Detect CAPTCHA pages returned by DDG
-            if (html.Contains("atb.js", StringComparison.OrdinalIgnoreCase)
-                && html.Contains("/challenge", StringComparison.OrdinalIgnoreCase))
-            {
-                throw new RateLimitException("DuckDuckGo returned a CAPTCHA challenge.");
-            }
-
-            return _parser.Parse(html);
-        }
+        return _parser.Parse(html);
     }
+
+    private static string FormUrlEncode(Dictionary<string, string> formData) =>
+        string.Join("&", formData.Select(kv =>
+            $"{Uri.EscapeDataString(kv.Key)}={Uri.EscapeDataString(kv.Value)}"));
 
     private static Dictionary<string, string> BuildFormData(string query, DdgSearchOptions options)
     {
@@ -113,42 +130,27 @@ public sealed class DdgClient : IDisposable
         return data;
     }
 
-    private void ConfigureClient(bool sendUserAgent)
+    private static bool IsCaptchaPage(string html)
     {
-        _httpClient.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate");
-        _httpClient.DefaultRequestHeaders.Add("DNT", "1");
+        // Legacy pattern: atb.js + /challenge
+        if (html.Contains("atb.js", StringComparison.OrdinalIgnoreCase)
+            && html.Contains("/challenge", StringComparison.OrdinalIgnoreCase))
+            return true;
 
-        if (sendUserAgent)
-        {
-            _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(DefaultUserAgent);
-        }
+        // Current pattern (2025+): anomaly.js bot-check with image puzzle
+        if (html.Contains("anomaly.js", StringComparison.OrdinalIgnoreCase)
+            && html.Contains("challenge-form", StringComparison.OrdinalIgnoreCase))
+            return true;
 
-        _httpClient.Timeout = TimeSpan.FromSeconds(30);
-    }
-
-    private static HttpClientHandler CreateDefaultHandler(Uri? proxy)
-    {
-        var handler = new HttpClientHandler
-        {
-            AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-            AllowAutoRedirect = true,
-            MaxAutomaticRedirections = 5
-        };
-
-        if (proxy is not null)
-        {
-            handler.Proxy = new WebProxy(proxy);
-            handler.UseProxy = true;
-        }
-
-        return handler;
+        return false;
     }
 
     public void Dispose()
     {
-        if (_ownsHttpClient)
+        if (_ownsClient)
         {
-            _httpClient.Dispose();
+            _primpClient?.Dispose();
+            _httpClient?.Dispose();
         }
     }
 }

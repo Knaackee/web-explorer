@@ -8,19 +8,19 @@ public class HeadingAwareChunkerTests
 {
     private const string SampleMarkdown = """
         # Introduction
-        
+
         This is the introduction to our article about testing.
-        
+
         ## Section One
-        
+
         Section one has some interesting content that we want to test. It covers the basics of unit testing and why it is important for software quality.
-        
+
         ## Section Two
-        
+
         Section two builds on the previous section and goes deeper into integration testing patterns and best practices for modern applications.
-        
+
         ## Conclusion
-        
+
         In conclusion, testing is crucial for building reliable software.
         """;
 

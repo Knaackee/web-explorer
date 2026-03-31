@@ -3,6 +3,7 @@ using Xunit;
 
 namespace Ndggr.Tests.Unit;
 
+#pragma warning disable CS0618 // SendUserAgent is obsolete
 public class DdgSearchOptionsTests
 {
     [Fact]
