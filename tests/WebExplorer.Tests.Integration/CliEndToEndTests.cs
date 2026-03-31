@@ -12,12 +12,25 @@ public sealed class CliEndToEndTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "WebExplorer.Cli"));
 
     private static async Task<(int ExitCode, string StdOut, string StdErr)> RunCliAsync(
-        string arguments, int timeoutMs = 60_000)
+        string arguments, int timeoutMs = 180_000)
     {
+        var cliExe = OperatingSystem.IsWindows() ? "wxp.exe" : "wxp";
+        var cliBinaryPath = Path.Combine(CliProjectPath, "bin", "Release", "net10.0", cliExe);
+
+        var fileName = "dotnet";
+        var processArguments = $"run --project \"{CliProjectPath}\" -- {arguments}";
+
+        // In CI, the solution is prebuilt, so using the binary avoids rebuilding on each test.
+        if (File.Exists(cliBinaryPath))
+        {
+            fileName = cliBinaryPath;
+            processArguments = arguments;
+        }
+
         var psi = new ProcessStartInfo
         {
-            FileName = "dotnet",
-            Arguments = $"run --project \"{CliProjectPath}\" -- {arguments}",
+            FileName = fileName,
+            Arguments = processArguments,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
