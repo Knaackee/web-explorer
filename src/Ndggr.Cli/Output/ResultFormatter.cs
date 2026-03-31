@@ -44,8 +44,7 @@ internal static class ResultFormatter
         }
         else
         {
-            var host = GetHost(result.Url);
-            AnsiConsole.MarkupLine($" [green]{indexStr}.[/] [bold]{Markup.Escape(result.Title)}[/] [blue][[{Markup.Escape(host)}]][/]");
+            AnsiConsole.MarkupLine($" [green]{indexStr}.[/] [bold]{Markup.Escape(result.Title)}[/] [blue][[{Markup.Escape(result.Url)}]][/]");
         }
 
         if (!string.IsNullOrWhiteSpace(result.Snippet))
@@ -89,10 +88,4 @@ internal static class ResultFormatter
         }
     }
 
-    private static string GetHost(string url)
-    {
-        if (Uri.TryCreate(url, UriKind.Absolute, out var uri))
-            return uri.Host;
-        return url;
-    }
 }
