@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <RootNamespace>WebExplorer.Content</RootNamespace>
+    <Description>URL content extraction for LLM workflows - Readability, Markdown, JSON</Description>
+    <PackageId>WebExplorer.Content</PackageId>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Authors>dggr.net contributors</Authors>
+    <PackageTags>content-extraction;readability;markdown;web-scraping;llm</PackageTags>
+    <RepositoryUrl>https://github.com/web-explorer/web-explorer</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="WebExplorer.Tests.Unit" />
+    <InternalsVisibleTo Include="WebExplorer.Benchmarks" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WebExplorer\WebExplorer.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AngleSharp" Version="1.4.0" />
+    <PackageReference Include="Primp" Version="0.1.0" />
+    <PackageReference Include="SmartReader" Version="0.11.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\html2markdown-windows-amd64.exe.gz" LogicalName="html2markdown-windows-amd64.exe.gz" />
+    <EmbeddedResource Include="Resources\html2markdown-linux-amd64.gz" LogicalName="html2markdown-linux-amd64.gz" />
+    <EmbeddedResource Include="Resources\html2markdown-linux-arm64.gz" LogicalName="html2markdown-linux-arm64.gz" />
+    <EmbeddedResource Include="Resources\html2markdown-darwin-amd64.gz" LogicalName="html2markdown-darwin-amd64.gz" />
+    <EmbeddedResource Include="Resources\html2markdown-darwin-arm64.gz" LogicalName="html2markdown-darwin-arm64.gz" />
+  </ItemGroup>
+
+</Project>

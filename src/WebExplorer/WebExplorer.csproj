@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <RootNamespace>WebExplorer</RootNamespace>
+    <Description>DuckDuckGo search library for .NET</Description>
+    <PackageId>WebExplorer</PackageId>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Authors>dggr.net contributors</Authors>
+    <PackageTags>duckduckgo;search;ddg;web-search</PackageTags>
+    <RepositoryUrl>https://github.com/web-explorer/web-explorer</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="WebExplorer.Tests.Unit" />
+    <InternalsVisibleTo Include="WebExplorer.Benchmarks" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AngleSharp" Version="1.4.0" />
+    <PackageReference Include="Primp" Version="0.1.0" />
+  </ItemGroup>
+
+</Project>

@@ -28,13 +28,13 @@ jobs:
           dotnet-quality: preview
 
       - name: Restore
-        run: dotnet restore ndggr.sln
+        run: dotnet restore web-explorer.sln
 
       - name: Build
-        run: dotnet build ndggr.sln --no-restore --configuration Release
+        run: dotnet build web-explorer.sln --no-restore --configuration Release
 
       - name: Test
-        run: dotnet test ndggr.sln --no-build --configuration Release
+        run: dotnet test web-explorer.sln --no-build --configuration Release
 
   pack-nuget:
     needs: build-and-test
@@ -54,20 +54,28 @@ jobs:
         id: version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
-      - name: Pack Ndggr
-        run: dotnet pack src/Ndggr/Ndggr.csproj -c Release -o ./nupkgs /p:Version=${{ steps.version.outputs.VERSION }}
+      - name: Pack WebExplorer
+        run: dotnet pack src/WebExplorer/WebExplorer.csproj -c Release -o ./artifacts/nuget /p:Version=${{ steps.version.outputs.VERSION }}
 
-      - name: Pack Ndggr.Content
-        run: dotnet pack src/Ndggr.Content/Ndggr.Content.csproj -c Release -o ./nupkgs /p:Version=${{ steps.version.outputs.VERSION }}
+      - name: Pack WebExplorer.Content
+        run: dotnet pack src/WebExplorer.Content/WebExplorer.Content.csproj -c Release -o ./artifacts/nuget /p:Version=${{ steps.version.outputs.VERSION }}
 
-      - name: Pack Ndggr.Extensions
-        run: dotnet pack src/Ndggr.Extensions/Ndggr.Extensions.csproj -c Release -o ./nupkgs /p:Version=${{ steps.version.outputs.VERSION }}
+      - name: Pack WebExplorer.Extensions
+        run: dotnet pack src/WebExplorer.Extensions/WebExplorer.Extensions.csproj -c Release -o ./artifacts/nuget /p:Version=${{ steps.version.outputs.VERSION }}
+
+      - name: Publish to NuGet
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: >
+          dotnet nuget push artifacts/nuget/*.nupkg
+          --api-key ${{ secrets.NUGET_API_KEY }}
+          --source https://api.nuget.org/v3/index.json
+          --skip-duplicate
 
       - name: Upload NuGet packages
         uses: actions/upload-artifact@v4
         with:
           name: nupkgs
-          path: ./nupkgs/*.nupkg
+          path: ./artifacts/nuget/*.nupkg
 
   publish-cli:
     needs: build-and-test
@@ -77,22 +85,22 @@ jobs:
         include:
           - os: windows-latest
             rid: win-x64
-            artifact: ndggr-win-x64.exe
+            artifact: wxp-win-x64.exe
           - os: windows-latest
             rid: win-arm64
-            artifact: ndggr-win-arm64.exe
+            artifact: wxp-win-arm64.exe
           - os: ubuntu-latest
             rid: linux-x64
-            artifact: ndggr-linux-x64
+            artifact: wxp-linux-x64
           - os: ubuntu-latest
             rid: linux-arm64
-            artifact: ndggr-linux-arm64
+            artifact: wxp-linux-arm64
           - os: macos-latest
             rid: osx-x64
-            artifact: ndggr-osx-x64
+            artifact: wxp-osx-x64
           - os: macos-latest
             rid: osx-arm64
-            artifact: ndggr-osx-arm64
+            artifact: wxp-osx-arm64
 
     steps:
       - uses: actions/checkout@v4
@@ -105,7 +113,7 @@ jobs:
 
       - name: Publish CLI
         run: >
-          dotnet publish src/Ndggr.Cli/Ndggr.Cli.csproj
+          dotnet publish src/WebExplorer.Cli/WebExplorer.Cli.csproj
           -c Release
           -r ${{ matrix.rid }}
           --self-contained true
@@ -115,11 +123,11 @@ jobs:
 
       - name: Rename binary (Linux/macOS)
         if: runner.os != 'Windows'
-        run: mv ./publish/ndggr-cli ${{ matrix.artifact }}
+        run: mv ./publish/wxp ${{ matrix.artifact }}
 
       - name: Rename binary (Windows)
         if: runner.os == 'Windows'
-        run: mv ./publish/ndggr-cli.exe ${{ matrix.artifact }}
+        run: mv ./publish/wxp.exe ${{ matrix.artifact }}
 
       - name: Upload binary
         uses: actions/upload-artifact@v4
@@ -144,9 +152,9 @@ jobs:
           generate_release_notes: true
           files: |
             ./artifacts/nupkgs/*.nupkg
-            ./artifacts/ndggr-win-x64.exe/ndggr-win-x64.exe
-            ./artifacts/ndggr-win-arm64.exe/ndggr-win-arm64.exe
-            ./artifacts/ndggr-linux-x64/ndggr-linux-x64
-            ./artifacts/ndggr-linux-arm64/ndggr-linux-arm64
-            ./artifacts/ndggr-osx-x64/ndggr-osx-x64
-            ./artifacts/ndggr-osx-arm64/ndggr-osx-arm64
+            ./artifacts/wxp-win-x64.exe/wxp-win-x64.exe
+            ./artifacts/wxp-win-arm64.exe/wxp-win-arm64.exe
+            ./artifacts/wxp-linux-x64/wxp-linux-x64
+            ./artifacts/wxp-linux-arm64/wxp-linux-arm64
+            ./artifacts/wxp-osx-x64/wxp-osx-x64
+            ./artifacts/wxp-osx-arm64/wxp-osx-arm64

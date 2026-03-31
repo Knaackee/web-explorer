@@ -27,13 +27,13 @@ jobs:
           dotnet-quality: ${{ matrix.dotnet-quality || 'ga' }}
 
       - name: Restore
-        run: dotnet restore ndggr.sln
+        run: dotnet restore web-explorer.sln
 
       - name: Build
-        run: dotnet build ndggr.sln --no-restore --configuration Release
+        run: dotnet build web-explorer.sln --no-restore --configuration Release
 
       - name: Test
-        run: dotnet test ndggr.sln --no-build --configuration Release --logger "trx;LogFileName=test-results.trx" --results-directory ./TestResults
+        run: dotnet test web-explorer.sln --no-build --configuration Release --logger "trx;LogFileName=test-results.trx" --results-directory ./TestResults
 
       - name: Upload test results
         if: always()

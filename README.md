@@ -1,4 +1,4 @@
-# ndggr
+# web-explorer
 
 **DuckDuckGo search & content extraction for .NET** — CLI tool and library.
 
@@ -9,96 +9,126 @@ A modern .NET reimagining of [ddgr](https://github.com/jarun/ddgr), with added c
 - **Web Search** — DuckDuckGo HTML search with region, time filters, safe search, and pagination
 - **Content Fetch** — Extract main content from any URL using the Readability algorithm
 - **Markdown Output** — Clean Markdown from web pages, optimized for LLM consumption
+- **Go Markdown Engine (Embedded)** — Bundles the `html-to-markdown` Go binary per platform and runs it from a temporary runtime extraction (no separate install)
 - **JSON/JSONL** — Structured `ContentDocument` output with schema versioning
 - **Proxy Support** — Explicit `--proxy` or `HTTPS_PROXY` environment variable
 - **Privacy First** — No tracking, optional user-agent suppression, DNT headers
 - **Single-File Binaries** — Self-contained executables for Windows, Linux, macOS (x64 + ARM64)
-- **Library + DI** — Use as NuGet packages with `services.AddNdggr()` integration
+- **Library + DI** — Use as NuGet packages with `services.AddWebExplorer()` integration
 
 ## Installation
 
+### CLI (One-Line Install)
+
+Windows (PowerShell):
+
+```powershell
+Invoke-WebRequest -Uri https://github.com/web-explorer/web-explorer/releases/latest/download/wxp-win-x64.exe -OutFile wxp.exe; Move-Item wxp.exe "$env:LOCALAPPDATA\Microsoft\WindowsApps\wxp.exe" -Force
+```
+
+Linux:
+
+```bash
+curl -Lo wxp https://github.com/web-explorer/web-explorer/releases/latest/download/wxp-linux-x64 && chmod +x wxp && sudo mv wxp /usr/local/bin/
+```
+
+macOS (Apple Silicon):
+
+```bash
+curl -Lo wxp https://github.com/web-explorer/web-explorer/releases/latest/download/wxp-osx-arm64 && chmod +x wxp && sudo mv wxp /usr/local/bin/
+```
+
 ### CLI (Single-File Binary)
 
-Download from [GitHub Releases](https://github.com/ndggr/ndggr/releases):
+Download from [GitHub Releases](https://github.com/web-explorer/web-explorer/releases):
 
 | Platform       | Binary                 |
 |----------------|------------------------|
-| Windows x64    | `ndggr-win-x64.exe`   |
-| Windows ARM64  | `ndggr-win-arm64.exe` |
-| Linux x64      | `ndggr-linux-x64`     |
-| Linux ARM64    | `ndggr-linux-arm64`   |
-| macOS x64      | `ndggr-osx-x64`       |
-| macOS ARM64    | `ndggr-osx-arm64`     |
+| Windows x64    | `wxp-win-x64.exe`   |
+| Windows ARM64  | `wxp-win-arm64.exe` |
+| Linux x64      | `wxp-linux-x64`     |
+| Linux ARM64    | `wxp-linux-arm64`   |
+| macOS x64      | `wxp-osx-x64`       |
+| macOS ARM64    | `wxp-osx-arm64`     |
 
 ### CLI (.NET Tool)
 
 ```bash
-dotnet tool install -g ndggr
+dotnet tool install -g WebExplorer.Cli
 ```
 
 ### Library (NuGet)
 
 ```bash
 # Core search library
-dotnet add package Ndggr
+dotnet add package WebExplorer
 
 # Content extraction
-dotnet add package Ndggr.Content
+dotnet add package WebExplorer.Content
 
 # DI + facade (includes both)
-dotnet add package Ndggr.Extensions
+dotnet add package WebExplorer.Extensions
 ```
 
 ## CLI Usage
+
+```bash
+# Show global help
+wxp help
+
+# Show help for a specific command
+wxp help search
+wxp help fetch
+```
 
 ### Search
 
 ```bash
 # Basic search
-ndggr search "rust programming language"
+wxp search "rust programming language"
 
 # Limit results, filter by region and time
-ndggr search "dotnet 10" -n 5 -r de-de -t month
+wxp search "dotnet 10" -n 5 -r de-de -t month
 
 # JSON output
-ndggr search "async await best practices" --json
+wxp search "async await best practices" --json
 
 # Instant answer only
-ndggr search "weather berlin" -i
+wxp search "weather berlin" -i
 
 # Open first result in browser (ducky mode)
-ndggr search "github ndggr" -j
+wxp search "github web-explorer" -j
 
 # Through a proxy
-ndggr search "privacy tools" -p http://127.0.0.1:8080
+wxp search "privacy tools" -p http://127.0.0.1:8080
 
 # Suppress user-agent, disable safe search
-ndggr search "something" --noua --unsafe
+wxp search "something" --noua --unsafe
 ```
 
 ### Fetch (Content Extraction)
 
 ```bash
 # Extract as Markdown (default)
-ndggr fetch https://example.com/article
+wxp fetch https://example.com/article
 
 # JSON output with full metadata
-ndggr fetch https://example.com/article --format json --pretty
+wxp fetch https://example.com/article --format json --pretty
 
 # JSONL (one document per line)
-ndggr fetch https://example.com/article --format jsonl
+wxp fetch https://example.com/article --format jsonl
 
 # With chunking for LLM context windows
-ndggr fetch https://example.com/article --format json --chunk-size 2000 --max-chunks 10
+wxp fetch https://example.com/article --format json --chunk-size 2000 --max-chunks 10
 
 # Include extracted links
-ndggr fetch https://example.com/article --format json --include-links
+wxp fetch https://example.com/article --format json --include-links
 
 # Save to file
-ndggr fetch https://example.com/article --output article.md
+wxp fetch https://example.com/article --output article.md
 
 # Through a proxy
-ndggr fetch https://example.com/article -p http://127.0.0.1:8080
+wxp fetch https://example.com/article -p http://127.0.0.1:8080
 ```
 
 ## Library Usage
@@ -106,9 +136,9 @@ ndggr fetch https://example.com/article -p http://127.0.0.1:8080
 ### Quick Start (Facade API)
 
 ```csharp
-using Ndggr.Extensions;
+using WebExplorer.Extensions;
 
-using var client = new NdggrClient();
+using var client = new WebExplorerClient();
 
 // Search
 var results = await client.SearchAsync("dotnet performance");
@@ -129,17 +159,17 @@ Console.WriteLine(doc.Markdown);
 ### Advanced (Options)
 
 ```csharp
-using Ndggr;
-using Ndggr.Content;
+using WebExplorer;
+using WebExplorer.Content;
 
 // Search with options
-var searchOptions = new DdgSearchOptions
+var searchOptions = new SearchOptions
 {
     Region = "de-de",
     TimeRange = "month",
     MaxResults = 10
 };
-using var ddg = new DdgClient();
+using var ddg = new SearchClient();
 var response = await ddg.SearchAsync("query", searchOptions);
 
 // Content extraction with options
@@ -157,11 +187,11 @@ var doc = await pipeline.ProcessAsync("https://example.com/article", extractionO
 ### Dependency Injection
 
 ```csharp
-using Ndggr.Extensions;
+using WebExplorer.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddNdggr(search =>
+builder.Services.AddWebExplorer(search =>
 {
     search.Region = "de-de";
     search.SafeSearch = false;
@@ -171,8 +201,8 @@ builder.Services.AddNdggr(search =>
     content.MaxRetries = 3;
 });
 
-// Inject NdggrClient anywhere
-app.MapGet("/search", async (NdggrClient client, string q) =>
+// Inject WebExplorerClient anywhere
+app.MapGet("/search", async (WebExplorerClient client, string q) =>
     await client.SearchAsync(q));
 ```
 
@@ -210,16 +240,16 @@ app.MapGet("/search", async (NdggrClient client, string q) =>
 ## Project Structure
 
 ```
-ndggr.sln
+web-explorer.sln
 ├── src/
-│   ├── Ndggr/                  # Core search library (DdgClient, HtmlResultParser)
-│   ├── Ndggr.Content/          # Content extraction (Readability, Markdown, Chunking)
-│   ├── Ndggr.Extensions/       # Facade + DI integration (NdggrClient)
-│   └── Ndggr.Cli/              # CLI tool (search, fetch commands)
+│   ├── WebExplorer/                  # Core search library (SearchClient, HtmlResultParser)
+│   ├── WebExplorer.Content/          # Content extraction (Readability, Markdown, Chunking)
+│   ├── WebExplorer.Extensions/       # Facade + DI integration (WebExplorerClient)
+│   └── WebExplorer.Cli/              # CLI tool (search, fetch commands)
 ├── tests/
-│   └── Ndggr.Tests.Unit/       # 204 unit tests
+│   └── WebExplorer.Tests.Unit/       # 204 unit tests
 ├── benchmarks/
-│   └── Ndggr.Benchmarks/       # BenchmarkDotNet performance tests
+│   └── WebExplorer.Benchmarks/       # BenchmarkDotNet performance tests
 └── .github/workflows/
     ├── ci.yml                  # CI pipeline (ubuntu/windows × net8.0/net10.0)
     └── release.yml             # Release pipeline (NuGet + single-file binaries)
@@ -245,4 +275,4 @@ ndggr.sln
 
 - [ddgr](https://github.com/jarun/ddgr) — Original Python CLI that inspired this project
 - [primp.net](https://github.com/Knaackee/primp.net) — .NET bridge for browser TLS/HTTP2 impersonation (avoids CAPTCHA detection)
-- [primp](https://github.com/deedy5/primp) by deedy5 — The underlying Rust HTTP client with browser fingerprinting
+- [html-to-markdown](https://github.com/JohannesKaufmann/html-to-markdown) — Go library/CLI embedded for high-quality HTML to Markdown conversion
