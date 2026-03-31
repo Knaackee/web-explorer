@@ -23,24 +23,24 @@ A modern .NET reimagining of [ddgr](https://github.com/jarun/ddgr), with added c
 Windows (PowerShell):
 
 ```powershell
-Invoke-WebRequest -Uri https://github.com/web-explorer/web-explorer/releases/latest/download/wxp-win-x64.exe -OutFile wxp.exe; Move-Item wxp.exe "$env:LOCALAPPDATA\Microsoft\WindowsApps\wxp.exe" -Force
+Invoke-WebRequest -Uri https://github.com/Knaackee/web-explorer/releases/latest/download/wxp-win-x64.exe -OutFile wxp.exe; Move-Item wxp.exe "$env:LOCALAPPDATA\Microsoft\WindowsApps\wxp.exe" -Force
 ```
 
 Linux:
 
 ```bash
-curl -Lo wxp https://github.com/web-explorer/web-explorer/releases/latest/download/wxp-linux-x64 && chmod +x wxp && sudo mv wxp /usr/local/bin/
+curl -Lo wxp https://github.com/Knaackee/web-explorer/releases/latest/download/wxp-linux-x64 && chmod +x wxp && sudo mv wxp /usr/local/bin/
 ```
 
 macOS (Apple Silicon):
 
 ```bash
-curl -Lo wxp https://github.com/web-explorer/web-explorer/releases/latest/download/wxp-osx-arm64 && chmod +x wxp && sudo mv wxp /usr/local/bin/
+curl -Lo wxp https://github.com/Knaackee/web-explorer/releases/latest/download/wxp-osx-arm64 && chmod +x wxp && sudo mv wxp /usr/local/bin/
 ```
 
 ### CLI (Single-File Binary)
 
-Download from [GitHub Releases](https://github.com/web-explorer/web-explorer/releases):
+Download from [GitHub Releases](https://github.com/Knaackee/web-explorer/releases):
 
 | Platform       | Binary                 |
 |----------------|------------------------|
