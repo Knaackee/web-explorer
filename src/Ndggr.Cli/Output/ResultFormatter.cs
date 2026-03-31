@@ -45,7 +45,7 @@ internal static class ResultFormatter
         else
         {
             var host = GetHost(result.Url);
-            AnsiConsole.MarkupLine($" [green]{indexStr}.[/] [bold]{Markup.Escape(result.Title)}[/] [blue]\\[{Markup.Escape(host)}][/]");
+            AnsiConsole.MarkupLine($" [green]{indexStr}.[/] [bold]{Markup.Escape(result.Title)}[/] [blue][[{Markup.Escape(host)}]][/]");
         }
 
         if (!string.IsNullOrWhiteSpace(result.Snippet))
