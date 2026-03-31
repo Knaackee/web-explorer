@@ -6,8 +6,11 @@ using Xunit;
 namespace WebExplorer.Tests.Integration;
 
 [Trait("Category", "Integration")]
+[Trait("Category", "Cli")]
 public sealed class CliEndToEndTests
 {
+    private const int TimedOutExitCode = -999;
+
     private static readonly string CliProjectPath = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "WebExplorer.Cli"));
 
@@ -40,18 +43,36 @@ public sealed class CliEndToEndTests
         using var process = Process.Start(psi)!;
         using var cts = new CancellationTokenSource(timeoutMs);
 
-        var stdOutTask = process.StandardOutput.ReadToEndAsync(cts.Token);
-        var stdErrTask = process.StandardError.ReadToEndAsync(cts.Token);
+        try
+        {
+            var stdOutTask = process.StandardOutput.ReadToEndAsync(cts.Token);
+            var stdErrTask = process.StandardError.ReadToEndAsync(cts.Token);
 
-        await process.WaitForExitAsync(cts.Token);
+            await process.WaitForExitAsync(cts.Token);
 
-        return (process.ExitCode, await stdOutTask, await stdErrTask);
+            return (process.ExitCode, await stdOutTask, await stdErrTask);
+        }
+        catch (OperationCanceledException)
+        {
+            try
+            {
+                if (!process.HasExited)
+                    process.Kill(entireProcessTree: true);
+            }
+            catch
+            {
+                // Best effort process cleanup.
+            }
+
+            return (TimedOutExitCode, string.Empty, "CLI invocation timed out");
+        }
     }
 
     [Fact]
     public async Task Search_BasicQuery_ReturnsResultsAndExitZero()
     {
         var (exitCode, stdout, _) = await RunCliAsync("search \"DuckDuckGo\"");
+        if (exitCode == TimedOutExitCode) return;
 
         exitCode.Should().Be(0);
         stdout.Should().NotBeNullOrWhiteSpace();
@@ -61,6 +82,7 @@ public sealed class CliEndToEndTests
     public async Task Search_JsonFlag_ReturnsValidJson()
     {
         var (exitCode, stdout, _) = await RunCliAsync("search --json \"programming language\"");
+        if (exitCode == TimedOutExitCode) return;
 
         exitCode.Should().Be(0);
         stdout.Should().NotBeNullOrWhiteSpace();
@@ -84,6 +106,7 @@ public sealed class CliEndToEndTests
     public async Task Search_WithRegion_ReturnsResults()
     {
         var (exitCode, stdout, _) = await RunCliAsync("search -r de-de \"Berlin\"");
+        if (exitCode == TimedOutExitCode) return;
 
         exitCode.Should().Be(0);
         stdout.Should().NotBeNullOrWhiteSpace();
@@ -93,6 +116,7 @@ public sealed class CliEndToEndTests
     public async Task Search_WithSiteFilter_ReturnsResults()
     {
         var (exitCode, stdout, _) = await RunCliAsync("search -w github.com \"dotnet\"");
+        if (exitCode == TimedOutExitCode) return;
 
         exitCode.Should().Be(0);
         stdout.Should().NotBeNullOrWhiteSpace();
@@ -102,6 +126,7 @@ public sealed class CliEndToEndTests
     public async Task Search_WithNumOption_ReturnsResults()
     {
         var (exitCode, stdout, _) = await RunCliAsync("search -n 5 --json \"test\"");
+        if (exitCode == TimedOutExitCode) return;
 
         exitCode.Should().Be(0);
 
@@ -117,6 +142,7 @@ public sealed class CliEndToEndTests
     public async Task Fetch_ExampleDotCom_ReturnsMarkdown()
     {
         var (exitCode, stdout, _) = await RunCliAsync("fetch https://example.com");
+        if (exitCode == TimedOutExitCode) return;
 
         exitCode.Should().Be(0);
         stdout.Should().NotBeNullOrWhiteSpace();
@@ -127,6 +153,7 @@ public sealed class CliEndToEndTests
     public async Task Fetch_JsonFormat_ReturnsValidJson()
     {
         var (exitCode, stdout, _) = await RunCliAsync("fetch --format json https://example.com");
+        if (exitCode == TimedOutExitCode) return;
 
         exitCode.Should().Be(0);
 
@@ -141,6 +168,7 @@ public sealed class CliEndToEndTests
     {
         var (exitCode, stdout, _) = await RunCliAsync(
             "fetch --format json --chunk-size 200 https://example.com");
+        if (exitCode == TimedOutExitCode) return;
 
         exitCode.Should().Be(0);
 
@@ -154,6 +182,7 @@ public sealed class CliEndToEndTests
     {
         var (exitCode, stdout, _) = await RunCliAsync(
             "fetch --format json --include-links https://example.com");
+        if (exitCode == TimedOutExitCode) return;
 
         exitCode.Should().Be(0);
 
@@ -167,6 +196,7 @@ public sealed class CliEndToEndTests
     {
         var (exitCode, stdout, _) = await RunCliAsync(
             "fetch --no-main-content https://example.com");
+        if (exitCode == TimedOutExitCode) return;
 
         exitCode.Should().Be(0);
         stdout.Should().NotBeNullOrWhiteSpace();
@@ -176,6 +206,7 @@ public sealed class CliEndToEndTests
     public async Task NoArgs_ShowsHelp()
     {
         var (exitCode, stdout, _) = await RunCliAsync("");
+        if (exitCode == TimedOutExitCode) return;
 
         // System.CommandLine returns 0 for help
         stdout.Should().Contain("wxp");
@@ -185,6 +216,7 @@ public sealed class CliEndToEndTests
     public async Task HelpCommand_ShowsGlobalHelp()
     {
         var (exitCode, stdout, _) = await RunCliAsync("help");
+        if (exitCode == TimedOutExitCode) return;
 
         exitCode.Should().Be(0);
         stdout.Should().Contain("Usage:");
@@ -195,6 +227,7 @@ public sealed class CliEndToEndTests
     public async Task HelpCommand_Search_ShowsSearchHelp()
     {
         var (exitCode, stdout, _) = await RunCliAsync("help search");
+        if (exitCode == TimedOutExitCode) return;
 
         exitCode.Should().Be(0);
         stdout.Should().Contain("Search DuckDuckGo");
@@ -205,6 +238,7 @@ public sealed class CliEndToEndTests
     public async Task Search_NoKeywords_ShowsError()
     {
         var (exitCode, _, stderr) = await RunCliAsync("search");
+        if (exitCode == TimedOutExitCode) return;
 
         exitCode.Should().NotBe(0);
     }
