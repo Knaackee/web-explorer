@@ -11,6 +11,7 @@
     <ProjectReference Include="..\..\src\WebExplorer\WebExplorer.csproj" />
     <ProjectReference Include="..\..\src\WebExplorer.Content\WebExplorer.Content.csproj" />
     <ProjectReference Include="..\..\src\WebExplorer.Extensions\WebExplorer.Extensions.csproj" />
+    <ProjectReference Include="..\..\src\WebExplorer.Playwright\WebExplorer.Playwright.csproj" />
   </ItemGroup>
 
   <ItemGroup>

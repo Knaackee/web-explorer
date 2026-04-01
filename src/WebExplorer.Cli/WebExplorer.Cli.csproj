@@ -10,7 +10,7 @@
     <ToolCommandName>wxp</ToolCommandName>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Authors>dggr.net contributors</Authors>
-    <Version>0.1.0</Version>
+    <Version>1.0.5</Version>
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
     <PublishTrimmed>false</PublishTrimmed>
@@ -25,6 +25,7 @@
     <ProjectReference Include="..\WebExplorer\WebExplorer.csproj" />
     <ProjectReference Include="..\WebExplorer.Extensions\WebExplorer.Extensions.csproj" />
     <ProjectReference Include="..\WebExplorer.Content\WebExplorer.Content.csproj" />
+    <ProjectReference Include="..\WebExplorer.Playwright\WebExplorer.Playwright.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -18,17 +18,12 @@ public sealed class CliEndToEndTests
         string arguments, int timeoutMs = 180_000)
     {
         var cliExe = OperatingSystem.IsWindows() ? "wxp.exe" : "wxp";
-        var cliBinaryPath = Path.Combine(CliProjectPath, "bin", "Release", "net10.0", cliExe);
+        var cliBinaryPath = Path.Combine(CliProjectPath, "bin", "Release", "net10.0", "win-x64", cliExe);
 
-        var fileName = "dotnet";
-        var processArguments = $"run --project \"{CliProjectPath}\" -- {arguments}";
-
-        // In CI, the solution is prebuilt, so using the binary avoids rebuilding on each test.
-        if (File.Exists(cliBinaryPath))
-        {
-            fileName = cliBinaryPath;
-            processArguments = arguments;
-        }
+        var fileName = File.Exists(cliBinaryPath) ? cliBinaryPath : "dotnet";
+        var processArguments = File.Exists(cliBinaryPath)
+            ? arguments
+            : $"run --no-build -c Release -f net10.0 --project \"{CliProjectPath}\" -- {arguments}";
 
         var psi = new ProcessStartInfo
         {
@@ -241,5 +236,94 @@ public sealed class CliEndToEndTests
         if (exitCode == TimedOutExitCode) return;
 
         exitCode.Should().NotBe(0);
+    }
+
+    [Fact]
+    public async Task SessionCommands_StartFetchInspectEnd_WorkAcrossProcesses()
+    {
+        if (!await PlaywrightTestSupport.IsChromiumAvailableAsync())
+            return;
+
+        using var server = new CookieTestServer();
+        var sessionId = $"cli-{Guid.NewGuid():N}"[..12];
+
+        try
+        {
+            var (startExitCode, startStdOut, _) = await RunCliAsync($"start-session --session {sessionId} --json", 240_000);
+            if (startExitCode == TimedOutExitCode) return;
+
+            startExitCode.Should().Be(0);
+            JsonDocument.Parse(startStdOut).RootElement.GetProperty("sessionId").GetString().Should().Be(sessionId);
+
+            var (setExitCode, _, _) = await RunCliAsync($"fetch --session {sessionId} {server.SetCookieUrl}", 240_000);
+            if (setExitCode == TimedOutExitCode) return;
+            setExitCode.Should().Be(0);
+
+            var (echoExitCode, echoStdOut, _) = await RunCliAsync($"fetch --session {sessionId} {server.EchoCookieUrl}", 240_000);
+            if (echoExitCode == TimedOutExitCode) return;
+            echoExitCode.Should().Be(0);
+            echoStdOut.Should().Contain("wxp-session=retained");
+
+            var (inspectExitCode, inspectStdOut, _) = await RunCliAsync($"inspect-session {sessionId} --json", 240_000);
+            if (inspectExitCode == TimedOutExitCode) return;
+            inspectExitCode.Should().Be(0);
+            JsonDocument.Parse(inspectStdOut).RootElement.GetProperty("sessionId").GetString().Should().Be(sessionId);
+
+            var (listExitCode, listStdOut, _) = await RunCliAsync("list-sessions --json", 240_000);
+            if (listExitCode == TimedOutExitCode) return;
+            listExitCode.Should().Be(0);
+            listStdOut.Should().Contain(sessionId);
+        }
+        finally
+        {
+            await RunCliAsync($"end-session {sessionId}", 240_000);
+        }
+
+        var (finalInspectExitCode, _, _) = await RunCliAsync($"inspect-session {sessionId}", 240_000);
+        finalInspectExitCode.Should().NotBe(0);
+    }
+
+    [Fact]
+    public async Task SessionCommands_ResumePersistentSessionAcrossProcesses()
+    {
+        if (!await PlaywrightTestSupport.IsChromiumAvailableAsync())
+            return;
+
+        using var server = new CookieTestServer();
+        var sessionId = $"resume-{Guid.NewGuid():N}"[..12];
+
+        try
+        {
+            var (startExitCode, _, _) = await RunCliAsync($"start-session --session {sessionId} --persistent --json", 240_000);
+            if (startExitCode == TimedOutExitCode) return;
+            startExitCode.Should().Be(0);
+
+            var (setExitCode, _, _) = await RunCliAsync($"fetch --session {sessionId} {server.SetCookieUrl}", 240_000);
+            if (setExitCode == TimedOutExitCode) return;
+            setExitCode.Should().Be(0);
+
+            var (endExitCode, _, _) = await RunCliAsync($"end-session {sessionId}", 240_000);
+            if (endExitCode == TimedOutExitCode) return;
+            endExitCode.Should().Be(0);
+
+            var (inspectStoppedExitCode, inspectStoppedStdOut, _) = await RunCliAsync($"inspect-session {sessionId} --json", 240_000);
+            if (inspectStoppedExitCode == TimedOutExitCode) return;
+            inspectStoppedExitCode.Should().Be(0);
+            JsonDocument.Parse(inspectStoppedStdOut).RootElement.GetProperty("state").GetString().Should().Be("Stopped");
+
+            var (resumeExitCode, resumeStdOut, _) = await RunCliAsync($"resume-session {sessionId} --json", 240_000);
+            if (resumeExitCode == TimedOutExitCode) return;
+            resumeExitCode.Should().Be(0);
+            JsonDocument.Parse(resumeStdOut).RootElement.GetProperty("state").GetString().Should().Be("Active");
+
+            var (echoExitCode, echoStdOut, _) = await RunCliAsync($"fetch --session {sessionId} {server.EchoCookieUrl}", 240_000);
+            if (echoExitCode == TimedOutExitCode) return;
+            echoExitCode.Should().Be(0);
+            echoStdOut.Should().Contain("wxp-session=retained");
+        }
+        finally
+        {
+            await RunCliAsync($"end-session {sessionId} --delete-profile", 240_000);
+        }
     }
 }

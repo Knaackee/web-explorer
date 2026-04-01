@@ -7,10 +7,15 @@
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
 
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <ProjectReference Include="..\..\src\WebExplorer.Cli\WebExplorer.Cli.csproj" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\..\src\WebExplorer\WebExplorer.csproj" />
     <ProjectReference Include="..\..\src\WebExplorer.Content\WebExplorer.Content.csproj" />
     <ProjectReference Include="..\..\src\WebExplorer.Extensions\WebExplorer.Extensions.csproj" />
+    <ProjectReference Include="..\..\src\WebExplorer.Playwright\WebExplorer.Playwright.csproj" />
   </ItemGroup>
 
   <ItemGroup>

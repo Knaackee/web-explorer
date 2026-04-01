@@ -8,7 +8,7 @@ internal static class HelpCommand
     {
         var topicArgument = new Argument<string[]>("topic")
         {
-            Description = "Optional command to show help for (e.g. 'search' or 'fetch')",
+            Description = "Optional command to show help for (e.g. 'search', 'fetch' or 'start-session')",
             Arity = ArgumentArity.ZeroOrMore
         };
 

@@ -4,6 +4,8 @@ using System.Text.Json.Serialization;
 using WebExplorer.Content;
 using WebExplorer.Content.Models;
 using WebExplorer.Cli.Output;
+using WebExplorer.Extensions;
+using WebExplorer.Playwright;
 
 namespace WebExplorer.Cli.Commands;
 
@@ -63,6 +65,23 @@ internal static class FetchCommand
             Description = "HTTPS proxy URI"
         };
 
+        var sessionOption = new Option<string?>("--session")
+        {
+            Description = "Use an existing Playwright session ID"
+        };
+
+        var rendererOption = new Option<string>("--renderer")
+        {
+            Description = "Fetch renderer: http or playwright (default: http)",
+            DefaultValueFactory = _ => "http"
+        };
+
+        var waitUntilOption = new Option<string>("--wait-until")
+        {
+            Description = "Playwright navigation wait strategy: load, domcontentloaded, networkidle",
+            DefaultValueFactory = _ => "networkidle"
+        };
+
         var timeoutOption = new Option<int>("--timeout-ms")
         {
             Description = "HTTP timeout in milliseconds",
@@ -94,6 +113,9 @@ internal static class FetchCommand
             includeLinksOption,
             noMainContentOption,
             proxyOption,
+            sessionOption,
+            rendererOption,
+            waitUntilOption,
             timeoutOption,
             retriesOption,
             prettyOption,
@@ -109,12 +131,23 @@ internal static class FetchCommand
             var includeLinks = parseResult.GetValue(includeLinksOption);
             var noMainContent = parseResult.GetValue(noMainContentOption);
             var proxyStr = parseResult.GetValue(proxyOption);
+            var sessionId = parseResult.GetValue(sessionOption);
+            var renderer = parseResult.GetValue(rendererOption)!;
+            var waitUntil = parseResult.GetValue(waitUntilOption)!;
             var timeoutMs = parseResult.GetValue(timeoutOption);
             var maxRetries = parseResult.GetValue(retriesOption);
             var pretty = parseResult.GetValue(prettyOption);
             var outputPath = parseResult.GetValue(outputOption);
 
             var proxy = ProxyResolver.Resolve(proxyStr);
+
+            if (!string.IsNullOrWhiteSpace(sessionId))
+            {
+                if (renderer.Equals("http", StringComparison.OrdinalIgnoreCase))
+                    renderer = "playwright";
+                else if (!renderer.Equals("playwright", StringComparison.OrdinalIgnoreCase))
+                    throw new ArgumentException("--session requires --renderer playwright when a renderer is specified.");
+            }
 
             var options = new ContentExtractionOptions
             {
@@ -129,8 +162,43 @@ internal static class FetchCommand
 
             try
             {
-                using var pipeline = new ContentPipeline(options);
-                var doc = await pipeline.ProcessAsync(url, options, cancellationToken);
+                ContentDocument doc;
+
+                using var client = new WebExplorerClient();
+                if (!string.IsNullOrWhiteSpace(sessionId))
+                {
+                    doc = await client.FetchWithPlaywrightSessionAsync(
+                        sessionId,
+                        url,
+                        options,
+                        new PlaywrightNavigationOptions
+                        {
+                            TimeoutMs = timeoutMs,
+                            WaitUntil = ParseWaitUntil(waitUntil)
+                        },
+                        cancellationToken);
+                }
+                else if (renderer.Equals("playwright", StringComparison.OrdinalIgnoreCase))
+                {
+                    doc = await client.FetchWithPlaywrightAsync(
+                        url,
+                        options,
+                        new PlaywrightNavigationOptions
+                        {
+                            TimeoutMs = timeoutMs,
+                            WaitUntil = ParseWaitUntil(waitUntil)
+                        },
+                        new PlaywrightSessionStartOptions
+                        {
+                            Proxy = proxy
+                        },
+                        cancellationToken);
+                }
+                else
+                {
+                    using var pipeline = new ContentPipeline(options);
+                    doc = await pipeline.ProcessAsync(url, options, cancellationToken);
+                }
 
                 var output = FormatOutput(doc, format, pretty);
 
@@ -165,4 +233,11 @@ internal static class FetchCommand
             _ => doc.Markdown ?? ""
         };
     }
+
+    private static PlaywrightWaitUntil ParseWaitUntil(string value) => value.ToLowerInvariant() switch
+    {
+        "load" => PlaywrightWaitUntil.Load,
+        "domcontentloaded" => PlaywrightWaitUntil.DomContentLoaded,
+        _ => PlaywrightWaitUntil.NetworkIdle
+    };
 }

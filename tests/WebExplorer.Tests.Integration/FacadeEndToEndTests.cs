@@ -1,6 +1,7 @@
 using FluentAssertions;
 using WebExplorer.Content;
 using WebExplorer.Extensions;
+using WebExplorer.Playwright;
 using Xunit;
 
 namespace WebExplorer.Tests.Integration;
@@ -99,6 +100,146 @@ public sealed class FacadeEndToEndTests : IDisposable
         var markdown = await client.FetchMarkdownAsync("https://example.com");
 
         markdown.Should().NotBeNullOrWhiteSpace();
+    }
+
+    [Fact]
+    public async Task PlaywrightSession_FetchesPreserveCookiesAcrossRequests()
+    {
+        if (!await PlaywrightTestSupport.IsChromiumAvailableAsync())
+            return;
+
+        using var server = new CookieTestServer();
+        var sessionId = $"facade-{Guid.NewGuid():N}"[..15];
+
+        try
+        {
+            var session = await _client.StartPlaywrightSessionAsync(new PlaywrightSessionStartOptions
+            {
+                SessionId = sessionId,
+                IdleTimeoutSeconds = 600,
+            });
+
+            session.SessionId.Should().Be(sessionId);
+
+            await _client.FetchWithPlaywrightSessionAsync(sessionId, server.SetCookieUrl);
+            var cookieDoc = await _client.FetchWithPlaywrightSessionAsync(sessionId, server.EchoCookieUrl);
+
+            cookieDoc.Markdown.Should().Contain("wxp-session=retained");
+
+            var inspect = await _client.GetPlaywrightSessionAsync(sessionId);
+            inspect.Should().NotBeNull();
+            inspect!.State.Should().Be(PlaywrightSessionState.Active);
+        }
+        finally
+        {
+            await _client.EndPlaywrightSessionAsync(sessionId);
+        }
+
+        var removed = await _client.GetPlaywrightSessionAsync(sessionId);
+        removed.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task PlaywrightPersistentSession_CanResumeAndPreserveCookies()
+    {
+        if (!await PlaywrightTestSupport.IsChromiumAvailableAsync())
+            return;
+
+        using var server = new CookieTestServer();
+        var sessionId = $"resume-{Guid.NewGuid():N}"[..15];
+
+        try
+        {
+            await _client.StartPlaywrightSessionAsync(new PlaywrightSessionStartOptions
+            {
+                SessionId = sessionId,
+                Persistent = true,
+                IdleTimeoutSeconds = 600,
+            });
+
+            await _client.FetchWithPlaywrightSessionAsync(sessionId, server.SetCookieUrl);
+            await _client.EndPlaywrightSessionAsync(sessionId);
+
+            var stopped = await _client.GetPlaywrightSessionAsync(sessionId);
+            stopped.Should().NotBeNull();
+            stopped!.State.Should().Be(PlaywrightSessionState.Stopped);
+
+            await _client.ResumePlaywrightSessionAsync(sessionId);
+            var cookieDoc = await _client.FetchWithPlaywrightSessionAsync(sessionId, server.EchoCookieUrl);
+            cookieDoc.Markdown.Should().Contain("wxp-session=retained");
+        }
+        finally
+        {
+            await _client.EndPlaywrightSessionAsync(sessionId, deleteSessionData: true);
+        }
+
+        var removed = await _client.GetPlaywrightSessionAsync(sessionId);
+        removed.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task PlaywrightSession_MaxConcurrentFetches_IsEnforced()
+    {
+        if (!await PlaywrightTestSupport.IsChromiumAvailableAsync())
+            return;
+
+        using var server = new CookieTestServer();
+        var sessionId = $"slots-{Guid.NewGuid():N}"[..15];
+
+        try
+        {
+            await _client.StartPlaywrightSessionAsync(new PlaywrightSessionStartOptions
+            {
+                SessionId = sessionId,
+                IdleTimeoutSeconds = 600,
+                MaxConcurrentFetches = 1,
+            });
+
+            var first = _client.FetchWithPlaywrightSessionAsync(sessionId, server.DelayedResponseUrl);
+            var second = _client.FetchWithPlaywrightSessionAsync(sessionId, server.DelayedResponseUrl);
+
+            await Task.WhenAll(first, second);
+            server.MaxObservedConcurrentDelayRequests.Should().Be(1);
+        }
+        finally
+        {
+            await _client.EndPlaywrightSessionAsync(sessionId, deleteSessionData: true);
+        }
+    }
+
+    [Fact]
+    public async Task PlaywrightSharedBrowserPool_ReusesBrowserAcrossFetches()
+    {
+        if (!await PlaywrightTestSupport.IsChromiumAvailableAsync())
+            return;
+
+        using var server = new CookieTestServer();
+        var pool = new PlaywrightSharedBrowserPool();
+        var options = new PlaywrightSharedBrowserOptions
+        {
+            IdleTimeoutSeconds = 600,
+            MaxConcurrentPages = 2
+        };
+
+        try
+        {
+            var initial = await pool.GetBrowserInfoAsync(options);
+            initial.Should().BeNull();
+
+            await pool.FetchHtmlAsync(server.SetCookieUrl, browserOptions: options);
+            var firstInfo = await pool.GetBrowserInfoAsync(options);
+            firstInfo.Should().NotBeNull();
+
+            await pool.FetchHtmlAsync(server.EchoCookieUrl, browserOptions: options);
+            var secondInfo = await pool.GetBrowserInfoAsync(options);
+            secondInfo.Should().NotBeNull();
+            secondInfo!.ProcessId.Should().Be(firstInfo!.ProcessId);
+            secondInfo.ConfigHash.Should().Be(firstInfo.ConfigHash);
+        }
+        finally
+        {
+            await pool.StopBrowserAsync(options, deleteBrowserData: true);
+        }
     }
 
     public void Dispose() => _client.Dispose();

@@ -8,6 +8,7 @@ A modern .NET reimagining of [ddgr](https://github.com/jarun/ddgr), with added c
 
 - **Web Search** — DuckDuckGo HTML search with region, time filters, safe search, and pagination
 - **Content Fetch** — Extract main content from any URL using the Readability algorithm
+- **Playwright Sessions** — Start durable browser sessions and reuse them across CLI invocations or library calls
 - **Markdown Output** — Clean Markdown from web pages, optimized for LLM consumption
 - **Go Markdown Engine (Embedded)** — Bundles the `html-to-markdown` Go binary per platform and runs it from a temporary runtime extraction (no separate install)
 - **JSON/JSONL** — Structured `ContentDocument` output with schema versioning
@@ -57,6 +58,16 @@ Download from [GitHub Releases](https://github.com/Knaackee/web-explorer/release
 dotnet tool install -g WebExplorer.Cli
 ```
 
+### Playwright Browser Install
+
+Chromium is installed automatically on first use when you run `start-session`, `fetch --session`, or `fetch --renderer playwright`.
+
+If you prefer a manual install ahead of time, you can still run:
+
+```powershell
+.\src\WebExplorer.Cli\bin\Release\net10.0\win-x64\playwright.ps1 install chromium
+```
+
 ### Library (NuGet)
 
 ```bash
@@ -68,6 +79,9 @@ dotnet add package WebExplorer.Content
 
 # DI + facade (includes both)
 dotnet add package WebExplorer.Extensions
+
+# Playwright-backed browser sessions
+dotnet add package WebExplorer.Playwright
 ```
 
 ## CLI Usage
@@ -79,6 +93,7 @@ wxp help
 # Show help for a specific command
 wxp help search
 wxp help fetch
+wxp help start-session
 ```
 
 ### Search
@@ -129,6 +144,31 @@ wxp fetch https://example.com/article --output article.md
 
 # Through a proxy
 wxp fetch https://example.com/article -p http://127.0.0.1:8080
+
+# One-off Playwright render
+wxp fetch https://example.com/article --renderer playwright
+
+# Fetch through an existing Playwright session
+# `--session` automatically switches the renderer to Playwright
+wxp fetch https://example.com/article --session my-login
+```
+
+### Playwright Sessions
+
+```bash
+# Start a headless browser session
+wxp start-session --session my-login
+
+# Inspect or list sessions
+wxp inspect-session my-login --json
+wxp list-sessions --json
+
+# Reuse the same browser profile and cookies across fetches
+wxp fetch https://example.com/login --session my-login
+wxp fetch https://example.com/account --session my-login --format json
+
+# End the browser session
+wxp end-session my-login
 ```
 
 ## Library Usage
@@ -137,6 +177,7 @@ wxp fetch https://example.com/article -p http://127.0.0.1:8080
 
 ```csharp
 using WebExplorer.Extensions;
+using WebExplorer.Playwright;
 
 using var client = new WebExplorerClient();
 
@@ -154,6 +195,19 @@ var doc = await client.FetchAsync("https://example.com/article");
 Console.WriteLine($"Title: {doc.Title}");
 Console.WriteLine($"Words: {doc.WordCount}");
 Console.WriteLine(doc.Markdown);
+
+// Start a reusable Playwright session
+var session = await client.StartPlaywrightSessionAsync(new PlaywrightSessionStartOptions
+{
+  SessionId = "my-login"
+});
+
+var sessionDoc = await client.FetchWithPlaywrightSessionAsync(
+  session.SessionId,
+  "https://example.com/account");
+Console.WriteLine(sessionDoc.Markdown);
+
+await client.EndPlaywrightSessionAsync(session.SessionId);
 ```
 
 ### Advanced (Options)
@@ -161,6 +215,7 @@ Console.WriteLine(doc.Markdown);
 ```csharp
 using WebExplorer;
 using WebExplorer.Content;
+using WebExplorer.Playwright;
 
 // Search with options
 var searchOptions = new SearchOptions
@@ -182,6 +237,26 @@ var extractionOptions = new ContentExtractionOptions
     Proxy = new Uri("http://127.0.0.1:8080")
 };
 var doc = await pipeline.ProcessAsync("https://example.com/article", extractionOptions);
+
+// Reusable browser session with Playwright
+using var facade = new WebExplorerClient();
+var session = await facade.StartPlaywrightSessionAsync(new PlaywrightSessionStartOptions
+{
+  SessionId = "checkout",
+  IdleTimeoutSeconds = 1800,
+});
+
+var browserDoc = await facade.FetchWithPlaywrightSessionAsync(
+  session.SessionId,
+  "https://example.com/cart",
+  extractionOptions,
+  new PlaywrightNavigationOptions
+  {
+    TimeoutMs = 45000,
+    WaitUntil = PlaywrightWaitUntil.NetworkIdle,
+  });
+
+await facade.EndPlaywrightSessionAsync(session.SessionId);
 ```
 
 ### Dependency Injection
@@ -204,6 +279,9 @@ builder.Services.AddWebExplorer(search =>
 // Inject WebExplorerClient anywhere
 app.MapGet("/search", async (WebExplorerClient client, string q) =>
     await client.SearchAsync(q));
+
+app.MapGet("/session", async (WebExplorerClient client) =>
+  await client.StartPlaywrightSessionAsync());
 ```
 
 ## ContentDocument JSON Schema (v1)
@@ -244,6 +322,7 @@ web-explorer.sln
 ├── src/
 │   ├── WebExplorer/                  # Core search library (SearchClient, HtmlResultParser)
 │   ├── WebExplorer.Content/          # Content extraction (Readability, Markdown, Chunking)
+│   ├── WebExplorer.Playwright/       # Durable Playwright browser sessions
 │   ├── WebExplorer.Extensions/       # Facade + DI integration (WebExplorerClient)
 │   └── WebExplorer.Cli/              # CLI tool (search, fetch commands)
 ├── tests/

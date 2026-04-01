@@ -10,7 +10,7 @@
     <PackageTags>content-extraction;readability;markdown;web-scraping;llm</PackageTags>
     <RepositoryUrl>https://github.com/web-explorer/web-explorer</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <Version>0.1.0</Version>
+    <Version>1.0.5</Version>
   </PropertyGroup>
 
   <ItemGroup>

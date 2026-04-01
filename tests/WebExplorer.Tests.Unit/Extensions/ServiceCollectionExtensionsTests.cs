@@ -2,6 +2,7 @@ using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using WebExplorer.Content;
 using WebExplorer.Extensions;
+using WebExplorer.Playwright;
 using Xunit;
 
 namespace WebExplorer.Tests.Unit.Extensions;
@@ -22,6 +23,7 @@ public class ServiceCollectionExtensionsTests
         provider.GetService<SearchClient>().Should().NotBeNull();
         provider.GetService<ContentPipeline>().Should().NotBeNull();
         provider.GetService<WebExplorerClient>().Should().NotBeNull();
+        provider.GetService<IPlaywrightSessionManager>().Should().NotBeNull();
     }
 
     [Fact]

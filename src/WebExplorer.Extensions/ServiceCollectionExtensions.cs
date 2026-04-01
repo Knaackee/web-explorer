@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using WebExplorer.Content;
+using WebExplorer.Playwright;
 
 namespace WebExplorer.Extensions;
 
@@ -27,11 +28,13 @@ public static class ServiceCollectionExtensions
     {
         services.AddSingleton(searchOptions);
         services.AddSingleton(contentOptions);
+        services.AddSingleton<IPlaywrightSessionManager, PlaywrightSessionManager>();
         services.AddSingleton<SearchClient>(sp => new SearchClient(sp.GetRequiredService<SearchOptions>()));
         services.AddSingleton<ContentPipeline>(sp => new ContentPipeline(sp.GetRequiredService<ContentExtractionOptions>()));
         services.AddSingleton<WebExplorerClient>(sp => new WebExplorerClient(
             sp.GetRequiredService<SearchOptions>(),
-            sp.GetRequiredService<ContentExtractionOptions>()));
+            sp.GetRequiredService<ContentExtractionOptions>(),
+            sp.GetRequiredService<IPlaywrightSessionManager>()));
         return services;
     }
 }
