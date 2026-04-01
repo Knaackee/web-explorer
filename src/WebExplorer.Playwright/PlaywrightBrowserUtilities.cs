@@ -48,6 +48,13 @@ internal static class PlaywrightBrowserUtilities
         psi.ArgumentList.Add("--disable-sync");
         psi.ArgumentList.Add("--disable-features=Translate,OptimizationHints,MediaRouter");
 
+        // GitHub-hosted Linux runners need a less restrictive Chromium startup profile.
+        if (OperatingSystem.IsLinux())
+        {
+            psi.ArgumentList.Add("--no-sandbox");
+            psi.ArgumentList.Add("--disable-dev-shm-usage");
+        }
+
         if (headless)
             psi.ArgumentList.Add("--headless=new");
 
